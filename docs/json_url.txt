@@ -1,0 +1,1 @@
+https://mikesingularity.github.io/icarus-consumables-data/icarus_consumables.min.json
