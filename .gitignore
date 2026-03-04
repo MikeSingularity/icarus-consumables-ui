@@ -16,6 +16,9 @@ dist
 dist-ssr
 *.local
 
+# Local data cache (fetched from GitHub Pages, not committed)
+public/icarus_consumables.min.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

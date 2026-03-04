@@ -53,7 +53,11 @@
 
 ### Data Layer
 
-**Fetch:** At app startup, fetch the JSON from the GitHub Pages URL. Cache the result in module scope for the session lifetime. Handle loading and error states explicitly.
+**Data URL constant:** `src/constants/api.ts` exports `DATA_URL`, which reads `import.meta.env.VITE_DATA_URL` and falls back to the authoritative GitHub Pages URL. No hardcoded URLs elsewhere in the codebase.
+
+**Local development:** `.env.development` sets `VITE_DATA_URL=/icarus_consumables.min.json`, pointing the app at a local copy served by the Vite dev server from `public/`. This file is gitignored and not bundled into the production build. Run `scripts/fetch-data.sh` to download or refresh it. In production (Cloudflare Pages), no env var is set, so `DATA_URL` automatically falls back to the GitHub Pages URL.
+
+**Fetch:** At app startup, fetch the JSON from `DATA_URL`. Cache the result in module scope for the session lifetime. Handle loading and error states explicitly.
 
 **Category filter:** The fetch hook accepts a `categories` filter parameter. For Phases 1 and 2, pass `["Food"]`. Expanding to other categories later is a single-argument change.
 
@@ -146,31 +150,42 @@ export interface StatMetadataEntry {
 ## Phase 1: Food Browser
 
 ### Data Handling
-- Filter out `category !== "Food"` at the data layer.
-- Show `is_decay_product` items normally — no badge. They appear in the list like any other item; players can observe they have no recipe.
-- For items with `source_item` set (pieces, e.g., cake slices): show the **piece** in the grid. The piece is what gets consumed and what players select.
+- Filter to `category === "Food"` at the data layer.
+- `is_decay_product` items shown normally — no badge. They appear in the list like any other item.
+- `is_orbital` items shown with a Lucide `Satellite` icon badge (cyan).
+- Items with a `feature` field (DLC content) shown with a Lucide `PackageOpen` icon badge. Badge colour is keyed per DLC name so different packs are visually distinct. Items with no `feature` field are base game.
+- Items with `source_item` set (pieces, e.g., cake slices): show the **piece** in the grid. The piece is what gets consumed and what players select.
 
 ### Item Card
 Each card displays:
 - `display_name`
 - Tier indicator (`tier.total`)
-- **Instant effects** from `base_stats` (e.g., Food: 50, Water: 20)
+- Icon badges in the top-right corner: orbital (cyan satellite), DLC (amber/coloured package icon)
+- **base_stats** row: shows `Food`, `Water`, `Health`, `Oxygen` values inline. `BaseFoodStomachSlots` is promoted out of modifier effects and shown as "Slots N" in the same row.
 - **Timed buffs** resolved from `modifiers` → global modifiers dict:
   - `display_name` of the modifier
-  - `lifetime` formatted as duration (e.g., "2 min"); if `lifetime === 0`, show "Instant" or "Permanent"
-  - `effects` formatted per stat using `stat_metadata.label`, with percentage values (keys ending in `%`) formatted as `+20%` and absolute values as `+75`
-- Crafting bench (`tier.anchor`) shown subtly
+  - `lifetime` formatted as duration (e.g., "5 min"); if `lifetime === 0`, show "Instant" (defensive — not expected for food items)
+  - `effects` formatted per stat using `stat_metadata.label` where available, otherwise derived from the key name. Percentage values (keys ending in `%`) formatted as `+20%`, absolute values as `+75`. `BaseFoodStomachSlots` is excluded from this list (promoted to base stats row).
+- Crafting bench: first bench of the first recipe (`recipes[item.recipes[0]].benches[0]`), shown subtly at the bottom. Omitted for items with no recipe.
 
 ### Filter Bar
-- Text search on `display_name`
-- Tier slider: 0–4, filters `tier.total <= selectedTier`
-- Talent filter: derive all unique `talent_requirement` values from items. Default: all talents assumed (no filtering). When a player deselects a talent, items requiring that talent become **dimmed with reduced opacity** — not hidden. No unique talent badges on cards.
-- Talent state persisted in `localStorage`.
+The filter bar sits above the grid and contains four controls:
+
+- **Tier slider**: range 0–4, default 4 (show all tiers). Filters to `tier.total <= selectedTier`. Persisted in `localStorage`.
+- **Sort dropdown**: always sorts descending. Options:
+  - `Tier` (default) — sort by `tier.total` descending.
+  - `Health`, `Stamina`, `Combat`, `Movement`, `Utility`, `Taming` — binary grouping by `stat_metadata` category: items with any modifier effect in that category appear first; secondary sort is `tier.total` descending. Categories with no matching food items are omitted from the dropdown.
+  - Individual `base_stats` keys present across food items (Food, Water, Health, Oxygen) — sort by that stat value descending; items with no value sort to the bottom.
+  - Sort selection persisted in `localStorage`.
+- **Talents button**: opens a modal listing all unique `talent_requirement` values. Default: all enabled. "Enable All" reset. Deselecting dims matching items. Items with no `talent_requirement` are never dimmed. Persisted in `localStorage`.
+- **DLC button** (shown only when items with `feature` exist): opens a modal listing all unique `feature` values. Default: all enabled. "Enable All" reset. Deselecting dims matching items. Items with no `feature` (base game) are never dimmed. Persisted in `localStorage`. Badge count shown on button when any are disabled.
 
 ### Grid
 - Responsive: 1 col (mobile) → 2 col (tablet) → 3–4 col (desktop)
-- Sortable by any stat from `base_stats` or by `tier.total`; clicking a stat header sorts descending, items with no value for that stat sort to the bottom
 - Default sort: `tier.total` descending
+- Loading state: centered spinner while data is being fetched
+- Error state: error message if the fetch fails
+- Empty state: "No items match your filters" if the tier slider produces no visible items
 
 ---
 

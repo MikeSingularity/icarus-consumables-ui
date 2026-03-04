@@ -5,6 +5,7 @@ export interface ConsumablesData {
   generics: Generic[]
   modifiers: Record<string, Modifier>
   stat_metadata: Record<string, StatMetadataEntry>
+  features?: Record<string, string>
 }
 
 export interface Metadata {
@@ -31,6 +32,7 @@ export interface Item {
   }
   source_item?: string
   talent_requirement?: string
+  required_features?: string[]
   growth_data?: { growth_time: number; harvest_min: number; harvest_max: number }
 }
 
@@ -40,7 +42,7 @@ export interface Recipe {
   alternate_inputs?: RecipeInput[]
   outputs: RecipeOutput[]
   benches: string[]
-  requirements: { talent?: string; character?: number; session?: string }
+  requirements: { talent?: string; character?: number; required_features?: string[] }
 }
 
 export interface RecipeInput {

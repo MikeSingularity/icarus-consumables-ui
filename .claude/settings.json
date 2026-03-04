@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \":*)",
+      "Bash(bash scripts/lint.sh)",
+      "Bash(pnpm test)",
+      "Bash(bash scripts/fetch-data.sh)",
+      "Bash(pnpm run build)",
+      "Bash(pnpm test run)",
+      "Bash(pnpm lint)",
+      "Bash(pnpm build)"
+    ],
+    "additionalDirectories": [
+      "/home/mike/Projects/mike-singularity/icarus-consumables-ui"
+    ]
+  }
+}
