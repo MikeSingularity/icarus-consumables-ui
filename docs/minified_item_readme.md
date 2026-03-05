@@ -11,9 +11,21 @@ The JSON object contains:
 - `generics`: Mappings for tag-based recipe inputs (e.g., `Any_Vegetable`) to valid items.
 - `features`: Mapping of feature IDs (DLCs/Updates) to their display names.
 - `modifiers`: Detailed effects for food/drink buffs.
-- `stat_metadata`: Mappings for internal stat codes to readable names and categories.
+- `stats`: Mappings for internal stat codes to readable names and categories.
 
-## 2. Items (`items`)
+## 2. Metadata (`metadata`)
+
+Version and build information for the specific data set.
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `parser_version` | string | Internal version of the Icarus Consumables Parser. |
+| `game_version` | string | Factual game version (from `version.json`). |
+| `build_guid` | string | Steam Dedicated Server build GUID. |
+| `parse_date` | string | Date the data was parsed (YYYY-MM-DD). |
+| `generated_date` | string | Date the minified file was finalized. |
+
+## 3. Items (`items`)
 
 An array of consumable items.
 
@@ -25,9 +37,12 @@ An array of consumable items.
 | `tier` | object | `{ "total": 2.3, "anchor": "Crafting_Bench" }`. |
 | `base_stats` | object | Direct permanent stats e.g. `{ "Food": 50 }`. |
 | `modifiers` | array | List of modifier IDs attached to this item. |
+| `modifier_stats`| object | Accumulated score by category (e.g. `{"Health": 120}`) for sorting. |
 | `recipes` | array | List of recipe IDs that produce this item. |
-| `required_features` | array | (Optional) Feature IDs required for this item (inherited). |
-| `traits` | object | (Optional) Booleans like `is_harvested`, `is_decay_product`. |
+| `source_item` | string | (Optional) The raw item/carcass this is derived from. |
+| `talent_requirement`| string | (Optional) Talent ID required to unlock. |
+| `required_features` | array | (Optional) Feature IDs required for this item. |
+| `traits` | object | (Optional) Booleans like `is_harvested`, `is_override`. |
 | `growth_data` | object | (Optional) Farming info if applicable. |
 
 ## 3. Recipes (`recipes`)
@@ -50,6 +65,15 @@ A dictionary of recipes indexed by ID.
 | `count` | integer | Quantity required. |
 | `display_name` | string | Localized name. |
 | `is_generic` | boolean | `true` if tag-based. |
+
+#### Output Fields
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `name` | string | Internal ID of the produced item. |
+| `display_name` | string | Localized name. |
+| `yields_count` | number | Average quantity produced. |
+| `yields_min` | number | (Optional) Minimum quantity. |
+| `yields_max` | number | (Optional) Maximum quantity. |
 
 #### Requirement Fields
 | Field | Type | Description |
@@ -74,13 +98,14 @@ Maps tags to valid items.
 | `id` | string | Internal ID. |
 | `display_name` | string | Name of the buff. |
 | `lifetime` | integer | Duration in seconds. |
-| `effects` | object | Stat changes. |
+| `stats` | object | Stat changes (raw ID -> value). |
 
-## 6. Stat Metadata (`stat_metadata`)
+## 6. Stats (`stats`)
 
 | Field | Type | Description |
 | :--- | :--- | :--- |
-| `label` | string | Readable label. |
+| `display_name` | string | Readable label (units stripped). |
+| `unit` | string | (Optional) Explicit unit (%, kg, s). |
 | `categories` | array | Functional categories. |
 
 ## 7. Features (`features`)

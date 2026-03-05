@@ -3,9 +3,9 @@ import { formatLifetime, formatEffectKey, formatEffectValue, formatTalentLabel }
 import type { StatMetadataEntry } from '@/types/consumables'
 
 const statMetadata: Record<string, StatMetadataEntry> = {
-  BaseMaximumHealth: { label: 'Max Health', categories: ['Health', 'Combat'] },
-  BaseMaximumStamina: { label: 'Max Stamina', categories: ['Stamina', 'Combat'] },
-  BaseFoodStomachSlots: { label: 'FoodStomachSlots', categories: ['Other'] },
+  'BaseMaximumHealth_+': { display_name: 'Max Health', categories: ['Health'] },
+  'BaseMaximumStamina_+': { display_name: 'Max Stamina', categories: ['Stamina'] },
+  'BaseFoodStomachSlots_+': { display_name: 'Consumes Space in Stomach', categories: ['Consumption'] },
 }
 
 describe('formatLifetime', () => {
@@ -30,37 +30,37 @@ describe('formatLifetime', () => {
 })
 
 describe('formatEffectKey', () => {
-  it('uses stat_metadata label when available', () => {
-    expect(formatEffectKey('BaseMaximumHealth', statMetadata)).toBe('Max Health')
-    expect(formatEffectKey('BaseMaximumStamina', statMetadata)).toBe('Max Stamina')
+  it('uses stats display_name when available', () => {
+    expect(formatEffectKey('BaseMaximumHealth_+', statMetadata)).toBe('Max Health')
+    expect(formatEffectKey('BaseMaximumStamina_+', statMetadata)).toBe('Max Stamina')
   })
 
-  it('derives label from CamelCase key when not in stat_metadata', () => {
-    expect(formatEffectKey('BaseHealthRegen%', statMetadata)).toBe('Health Regen')
-    expect(formatEffectKey('BaseStaminaRegen%', statMetadata)).toBe('Stamina Regen')
-    expect(formatEffectKey('BaseExperience%', statMetadata)).toBe('Experience')
+  it('derives label from CamelCase key when not in stats', () => {
+    expect(formatEffectKey('BaseHealthRegen_+%', statMetadata)).toBe('Health Regen')
+    expect(formatEffectKey('BaseStaminaRegen_+%', statMetadata)).toBe('Stamina Regen')
+    expect(formatEffectKey('BaseExperience_+%', statMetadata)).toBe('Experience')
   })
 
   it('strips Granted prefix when deriving', () => {
-    expect(formatEffectKey('GrantedAuraTamingSpeed', statMetadata)).toBe('Aura Taming Speed')
+    expect(formatEffectKey('GrantedAuraTamingSpeed_?', statMetadata)).toBe('Aura Taming Speed')
   })
 })
 
 describe('formatEffectValue', () => {
   it('formats percent keys as percentage strings', () => {
-    expect(formatEffectValue('BaseHealthRegen%', 0.2)).toBe('+20%')
-    expect(formatEffectValue('BaseExperience%', 0.05)).toBe('+5%')
-    expect(formatEffectValue('BaseStaminaRegen%', 1)).toBe('+100%')
+    expect(formatEffectValue('BaseHealthRegen_+%', 20)).toBe('+20%')
+    expect(formatEffectValue('BaseExperience_+%', 5)).toBe('+5%')
+    expect(formatEffectValue('BaseStaminaRegen_+%', 100)).toBe('+100%')
   })
 
   it('formats absolute keys as plain integers', () => {
-    expect(formatEffectValue('BaseMaximumHealth', 75)).toBe('+75')
-    expect(formatEffectValue('BaseFoodStomachSlots', 1)).toBe('+1')
+    expect(formatEffectValue('BaseMaximumHealth_+', 75)).toBe('+75')
+    expect(formatEffectValue('BaseFoodStomachSlots_+', 1)).toBe('+1')
   })
 
   it('prepends minus for negative values', () => {
-    expect(formatEffectValue('BaseMaximumHealth', -50)).toBe('-50')
-    expect(formatEffectValue('BaseHealthRegen%', -0.1)).toBe('-10%')
+    expect(formatEffectValue('BaseMaximumHealth_+', -50)).toBe('-50')
+    expect(formatEffectValue('BaseHealthRegen_+%', -10)).toBe('-10%')
   })
 })
 

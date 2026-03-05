@@ -9,6 +9,9 @@ interface ConsumableGridProps {
   recipes: Record<string, Recipe>
   statMetadata: Record<string, StatMetadataEntry>
   filterState: FilterState
+  selectedNames: Set<string>
+  blockedModIds: Set<string>
+  onToggleItem: (item: Item) => void
 }
 
 /**
@@ -21,11 +24,14 @@ export function ConsumableGrid({
   recipes,
   statMetadata,
   filterState,
+  selectedNames,
+  blockedModIds,
+  onToggleItem,
 }: ConsumableGridProps): React.JSX.Element {
   const { tier, sortKey, disabledTalents, disabledFeatures } = filterState
 
   const tierFiltered = items.filter((item) => item.tier.total <= tier)
-  const sorted = sortItems(tierFiltered, sortKey, modifiers, statMetadata)
+  const sorted = sortItems(tierFiltered, sortKey)
 
   if (sorted.length === 0) {
     return (
@@ -50,6 +56,12 @@ export function ConsumableGrid({
             recipes={recipes}
             statMetadata={statMetadata}
             dimmed={dimmed}
+            selected={selectedNames.has(item.name)}
+            conflicted={
+              !selectedNames.has(item.name) &&
+              item.modifiers.some((mid) => blockedModIds.has(mid))
+            }
+            onClick={() => onToggleItem(item)}
           />
         )
       })}

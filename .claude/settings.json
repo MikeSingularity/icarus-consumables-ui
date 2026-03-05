@@ -8,7 +8,9 @@
       "Bash(pnpm run build)",
       "Bash(pnpm test run)",
       "Bash(pnpm lint)",
-      "Bash(pnpm build)"
+      "Bash(pnpm build)",
+      "Bash(pnpm run lint)",
+      "Bash(pnpm vitest run)"
     ],
     "additionalDirectories": [
       "/home/mike/Projects/mike-singularity/icarus-consumables-ui"

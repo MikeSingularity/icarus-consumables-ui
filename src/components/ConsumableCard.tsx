@@ -1,5 +1,5 @@
 import { PackageOpen, Satellite } from 'lucide-react'
-import { formatLifetime, formatEffectKey, formatEffectValue } from '@/utils/formatters'
+import { formatLifetime, formatEffectKey, formatEffectValue, formatBaseStatLabel } from '@/utils/formatters'
 import { BASE_STAT_DISPLAY_ORDER } from '@/constants/categories'
 import type { Item, Modifier, Recipe, StatMetadataEntry } from '@/types/consumables'
 
@@ -10,13 +10,19 @@ interface ConsumableCardProps {
   statMetadata: Record<string, StatMetadataEntry>
   /** When true, the card is rendered at reduced opacity (talent not unlocked). */
   dimmed: boolean
+  /** When true, the card is highlighted as part of the active loadout. */
+  selected: boolean
+  /** When true, the card shares a modifier with a selected item and cannot be added. */
+  conflicted: boolean
+  /** Called when the card is clicked to add or remove it from the loadout. */
+  onClick: () => void
 }
 
 /**
  * Modifier effect key promoted out of the buff list and shown inline with base stats.
  * Virtually every food item carries this at value 1; hoisting it avoids a repetitive effect row.
  */
-const PROMOTED_EFFECT_KEY = 'BaseFoodStomachSlots'
+const PROMOTED_EFFECT_KEY = 'BaseFoodStomachSlots_+'
 
 /**
  * Distinct Tailwind colour classes cycled per DLC feature name.
@@ -57,12 +63,19 @@ export function ConsumableCard({
   recipes,
   statMetadata,
   dimmed,
+  selected,
+  conflicted,
+  onClick,
 }: ConsumableCardProps): React.JSX.Element {
   const tierColour = TIER_COLOURS[item.tier.total] ?? 'bg-gray-700 text-gray-200'
 
   const craftingBench = (() => {
     const firstRecipe = item.recipes[0] !== undefined ? recipes[item.recipes[0]] : undefined
-    return firstRecipe?.benches[0] ?? undefined
+    const bench = firstRecipe?.benches[0]
+    if (item.traits?.is_harvested) return bench !== undefined ? `Gathered / ${bench}` : 'Gathered'
+    if (bench !== undefined) return bench
+    if (item.traits?.is_orbital) return 'Orbital'
+    return 'Unknown'
   })()
 
   const resolvedModifiers = item.modifiers
@@ -75,14 +88,30 @@ export function ConsumableCard({
 
   // Extract the promoted effect value (FoodStomachSlots) from any modifier that carries it.
   const promotedSlots = resolvedModifiers
-    .map((m) => m.effects[PROMOTED_EFFECT_KEY])
+    .map((m) => m.stats[PROMOTED_EFFECT_KEY])
     .find((v): v is number => v !== undefined)
+
+  const opacityClass = conflicted ? 'opacity-50' : dimmed ? 'opacity-35' : 'opacity-100'
+  const borderClass = selected
+    ? 'border-blue-500 ring-1 ring-blue-500'
+    : 'border-gray-700' + (conflicted ? '' : ' hover:border-gray-500')
 
   return (
     <div
-      className={`flex flex-col rounded-lg border border-gray-700 bg-gray-800 transition-opacity ${
-        dimmed ? 'opacity-35' : 'opacity-100'
-      }`}
+      role={conflicted ? undefined : 'button'}
+      tabIndex={conflicted ? -1 : 0}
+      onClick={conflicted ? undefined : onClick}
+      onKeyDown={
+        conflicted
+          ? undefined
+          : (e) => {
+              if (e.key === 'Enter' || e.key === ' ') onClick()
+            }
+      }
+      aria-disabled={conflicted}
+      className={`flex select-none flex-col rounded-lg border bg-gray-800 transition-all ${
+        conflicted ? 'cursor-not-allowed' : 'cursor-pointer'
+      } ${borderClass} ${opacityClass}`}
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-2 px-3 pt-3">
@@ -113,7 +142,7 @@ export function ConsumableCard({
         <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 px-3">
           {presentBaseStats.map((k) => (
             <span key={k} className="text-xs text-gray-300">
-              <span className="text-gray-400">{k}</span>{' '}
+              <span className="text-gray-400">{formatBaseStatLabel(statMetadata[k]?.display_name ?? k)}</span>{' '}
               <span className={(item.base_stats[k] ?? 0) < 0 ? 'text-red-400' : ''}>
                 {item.base_stats[k]}
               </span>
@@ -139,7 +168,7 @@ export function ConsumableCard({
                 </span>
               </div>
               <ul className="mt-0.5 space-y-0.5">
-                {Object.entries(mod.effects)
+                {Object.entries(mod.stats)
                   .filter(([statKey]) => statKey !== PROMOTED_EFFECT_KEY)
                   .map(([statKey, value]) => (
                   <li key={statKey} className="flex justify-between text-xs">
@@ -156,11 +185,9 @@ export function ConsumableCard({
       )}
 
       {/* Footer */}
-      {craftingBench !== undefined && (
-        <div className="mt-auto px-3 pb-2 pt-2">
-          <span className="text-xs text-gray-500">{craftingBench}</span>
-        </div>
-      )}
+      <div className="mt-auto px-3 pb-2 pt-2">
+        <span className="text-xs text-gray-500">{craftingBench}</span>
+      </div>
     </div>
   )
 }

@@ -4,7 +4,7 @@ export interface ConsumablesData {
   recipes: Record<string, Recipe>
   generics: Generic[]
   modifiers: Record<string, Modifier>
-  stat_metadata: Record<string, StatMetadataEntry>
+  stats: Record<string, StatMetadataEntry>
   features?: Record<string, string>
 }
 
@@ -23,6 +23,7 @@ export interface Item {
   base_stats: Record<string, number>
   tier: { total: number; anchor: string }
   modifiers: string[]
+  modifier_stats: Record<string, number>
   recipes: string[]
   traits?: {
     is_harvested?: boolean
@@ -70,10 +71,11 @@ export interface Modifier {
   id: string
   display_name: string
   lifetime: number
-  effects: Record<string, number>
+  stats: Record<string, number>
 }
 
 export interface StatMetadataEntry {
-  label: string
+  display_name: string
+  unit?: string
   categories: string[]
 }

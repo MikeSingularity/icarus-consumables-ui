@@ -1,24 +1,30 @@
 /**
- * stat_metadata category names used for binary modifier-effect grouping in the sort dropdown.
- *
- * Excluded categories:
- * - "Other"  — primarily BaseFoodStomachSlots; present on nearly every item, not useful for sorting.
- * - "Flags"  — internal markers, not player-facing stats.
+ * modifier_stats category names shown as sort options.
+ * Only categories with ≥10 food items carrying that category are included;
+ * "Consumption" is always excluded (present on nearly every food item, not useful for sorting).
+ * Sort uses item.modifier_stats[category] descending.
  */
 export const MODIFIER_SORT_CATEGORIES = [
   'Health',
   'Stamina',
-  'Combat',
-  'Movement',
-  'Utility',
-  'Taming',
+  'Experience',
+  'Character',
+  'Weather',
+  'Mining',
+  'Melee Weapon',
+  'Ranged Weapon',
 ] as const
 
 /**
- * Display order and labels for base_stat keys on item cards.
- * These keys are not present in stat_metadata and are displayed as-is.
+ * Display order for base_stat keys on item cards and in the sort dropdown.
+ * Keys must match the exact stat key names used in item.base_stats.
  */
-export const BASE_STAT_DISPLAY_ORDER: readonly string[] = ['Food', 'Water', 'Health', 'Oxygen']
+export const BASE_STAT_DISPLAY_ORDER: readonly string[] = [
+  'BaseFoodRecovery_+',
+  'BaseWaterRecovery_+',
+  'BaseHealthRecovery_+',
+  'BaseOxygenRecovery_+',
+]
 
 /**
  * localStorage keys used to persist filter state across sessions.
@@ -28,4 +34,5 @@ export const LS_KEYS = {
   SORT: 'icarus:sort',
   DISABLED_TALENTS: 'icarus:disabledTalents',
   DISABLED_FEATURES: 'icarus:disabledFeatures',
+  SLOTS: 'icarus:slots',
 } as const

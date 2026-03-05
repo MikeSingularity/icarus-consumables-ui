@@ -43,7 +43,7 @@ export function FilterBar({
 
   return (
     <>
-      <div className="sticky top-0 z-10 border-b border-gray-800 bg-gray-900 px-4 py-3">
+      <div className="border-b border-gray-800 bg-gray-900 px-4 py-3">
         <div className="flex flex-wrap items-center gap-4">
           {/* Tier slider */}
           <label className="flex items-center gap-2 text-sm text-gray-300">
