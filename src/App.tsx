@@ -242,7 +242,7 @@ export default function App(): React.JSX.Element {
           />
         </main>
 
-        <aside className="w-full border-t border-gray-800 bg-gray-900 lg:sticky lg:top-[6.5rem] lg:max-h-[calc(100vh-6.5rem)] lg:w-80 lg:shrink-0 lg:overflow-y-auto lg:border-t-0 lg:border-l xl:w-96">
+        <aside className="w-full min-h-[calc(100vh-6.5rem)] border-t border-gray-800 bg-gray-900 lg:sticky lg:top-[6.5rem] lg:max-h-[calc(100vh-6.5rem)] lg:w-80 lg:shrink-0 lg:overflow-y-auto lg:border-t-0 lg:border-l xl:w-96">
           <LoadoutPanel
             selectedItems={selectedItems}
             slotCount={slotCount}

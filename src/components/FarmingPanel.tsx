@@ -191,6 +191,9 @@ export function FarmingPanel({
       {/* Derived recipe selectors: one per ingredient with multiple recipes (applies to all uses) */}
       {result.derivedRecipeChoices.length > 0 && (
         <div className="mb-5 flex flex-col gap-2">
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+            Choose Recipe
+          </h3>
           {result.derivedRecipeChoices.map((choice) => {
             const activeRecipeId =
               derivedRecipeOverrides[choice.ingredientName] ?? choice.recipeIds[0]
@@ -199,16 +202,16 @@ export function FarmingPanel({
             return (
               <label
                 key={choice.ingredientName}
-                className="flex items-center gap-1.5 text-xs text-gray-400"
+                className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 text-xs text-gray-400"
                 title={`Recipe for ${choice.ingredientDisplayName} (used by all loadout items)`}
               >
-                <span className="shrink-0">{choice.ingredientDisplayName}</span>
+                <span className="min-w-0 truncate">{choice.ingredientDisplayName}</span>
                 <select
                   value={value}
                   onChange={(e) =>
                     onSetDerivedRecipe(choice.ingredientName, e.target.value)
                   }
-                  className="rounded border border-gray-600 bg-gray-800 px-1.5 py-0.5 text-gray-200 focus:border-blue-500 focus:outline-none"
+                  className="w-full min-w-[8rem] rounded border border-gray-600 bg-gray-800 px-1.5 py-0.5 text-gray-200 focus:border-blue-500 focus:outline-none"
                 >
                   {choice.recipeIds.map((rid) => {
                     const r = recipes[rid]
