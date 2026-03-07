@@ -13,6 +13,16 @@ export interface CanonicalUrlParams {
   servingsOverrides: Record<string, number>
 }
 
+/**
+ * Sets of keys that are still relevant for the current loadout.
+ * Used to strip stale r/g/d/s overrides from the URL when the loadout or recipe tree changes.
+ */
+export interface RelevantUrlContext {
+  loadoutItemNames: Set<string>
+  derivedIngredientNames: Set<string>
+  genericIds: Set<string>
+}
+
 /** Parsed farming params from URL (unvalidated). */
 export interface ParsedFarmingParams {
   recipeOverrides: Record<string, string>
@@ -69,6 +79,42 @@ function parseServingsParam(value: string | null): Record<string, number> {
     if (k && !Number.isNaN(v) && v > 0) result[k] = v
   }
   return result
+}
+
+/**
+ * Filters canonical URL params so only overrides for currently relevant keys are kept.
+ * Removes r/g/d/s entries for loadout items or ingredients no longer in the current recipe tree.
+ *
+ * @param params - Full params (e.g. from app state).
+ * @param relevant - Keys that are still relevant for the current loadout and farming result.
+ */
+export function filterCanonicalParamsToRelevant(
+  params: CanonicalUrlParams,
+  relevant: RelevantUrlContext,
+): CanonicalUrlParams {
+  const recipeOverrides: Record<string, string> = {}
+  for (const [name, recipeId] of Object.entries(params.recipeOverrides)) {
+    if (relevant.loadoutItemNames.has(name)) recipeOverrides[name] = recipeId
+  }
+  const genericSelections: Record<string, string> = {}
+  for (const [id, itemName] of Object.entries(params.genericSelections)) {
+    if (relevant.genericIds.has(id)) genericSelections[id] = itemName
+  }
+  const derivedRecipeOverrides: Record<string, string> = {}
+  for (const [ingredientName, recipeId] of Object.entries(params.derivedRecipeOverrides)) {
+    if (relevant.derivedIngredientNames.has(ingredientName)) derivedRecipeOverrides[ingredientName] = recipeId
+  }
+  const servingsOverrides: Record<string, number> = {}
+  for (const [name, value] of Object.entries(params.servingsOverrides)) {
+    if (relevant.loadoutItemNames.has(name)) servingsOverrides[name] = value
+  }
+  return {
+    ...params,
+    recipeOverrides,
+    genericSelections,
+    derivedRecipeOverrides,
+    servingsOverrides,
+  }
 }
 
 /**

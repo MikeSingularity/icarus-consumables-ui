@@ -33,6 +33,7 @@ export function buildSortOptions(
 
   return [
     { key: 'tier', label: 'Tier' },
+    { key: 'name', label: 'Name' },
     ...presentBaseStats.map((k) => ({
       key: `${PREFIX_BASE}${k}`,
       label: formatBaseStatLabel(statMetadata[k]?.display_name ?? k),
@@ -45,6 +46,7 @@ export function buildSortOptions(
  * Sorts a copy of the items array according to the given sort key.
  *
  * - "tier": descending by tier.total
+ * - "name": ascending by display_name (localeCompare)
  * - "base:<key>": descending by base_stats[key]; items without the stat sort last
  * - "modcat:<category>": descending by modifier_stats[category] score;
  *   items without the stat sort last; secondary sort is tier.total descending
@@ -55,6 +57,11 @@ export function sortItems(items: Item[], sortKey: string): Item[] {
   return [...items].sort((a, b) => {
     if (sortKey === 'tier') {
       return b.tier.total - a.tier.total
+    }
+
+    if (sortKey === 'name') {
+      const cmp = a.display_name.localeCompare(b.display_name)
+      return cmp !== 0 ? cmp : b.tier.total - a.tier.total
     }
 
     if (sortKey.startsWith(PREFIX_BASE)) {

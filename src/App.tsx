@@ -5,7 +5,12 @@ import { useLoadoutState } from '@/hooks/useLoadoutState'
 import { useFarmingState } from '@/hooks/useFarmingState'
 import { buildSortOptions } from '@/utils/sortItems'
 import { buildItemsMap, buildGenericsMap } from '@/utils/farmingCalc'
-import { buildCanonicalSearchString } from '@/utils/urlState'
+import {
+  buildCanonicalSearchString,
+  filterCanonicalParamsToRelevant,
+  type RelevantUrlContext,
+} from '@/utils/urlState'
+import { computeFarmingResult } from '@/utils/farmingCalc'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { FilterBar } from '@/components/FilterBar'
 import { ConsumableGrid } from '@/components/ConsumableGrid'
@@ -71,16 +76,71 @@ export default function App(): React.JSX.Element {
     setDerivedRecipeOverride,
   } = useFarmingState(farmingValidationContext)
 
-  useEffect(() => {
-    if (data === null) return
-    const search = buildCanonicalSearchString({
-      itemNames: selectedItems.map((i) => i.name),
-      slotCount,
+  const [cardViewMode, setCardViewMode] = useState<'modifiers' | 'recipe'>('modifiers')
+
+  const itemsMap = useMemo(() => (data !== null ? buildItemsMap(data.items) : {}), [data])
+  const genericsMap = useMemo(() => (data !== null ? buildGenericsMap(data.generics) : {}), [data])
+
+  const loadoutItemsWithModifiers = useMemo(
+    () => selectedItems.filter((item) => item.modifiers.length > 0),
+    [selectedItems],
+  )
+
+  const farmingResultForUrl = useMemo(() => {
+    if (data === null) return null
+    return computeFarmingResult({
+      loadoutItems: loadoutItemsWithModifiers,
+      itemsMap,
+      recipes: data.recipes,
+      modifiers: data.modifiers,
+      genericsMap,
+      servingsOverrides,
       recipeOverrides,
       genericSelections,
       derivedRecipeOverrides,
-      servingsOverrides,
+      statMetadata: data.stats,
     })
+  }, [
+    data,
+    loadoutItemsWithModifiers,
+    itemsMap,
+    genericsMap,
+    servingsOverrides,
+    recipeOverrides,
+    genericSelections,
+    derivedRecipeOverrides,
+  ])
+
+  const relevantUrlContext = useMemo((): RelevantUrlContext => {
+    const loadoutItemNames = new Set(selectedItems.map((i) => i.name))
+    if (farmingResultForUrl === null) {
+      return {
+        loadoutItemNames,
+        derivedIngredientNames: new Set(),
+        genericIds: new Set(),
+      }
+    }
+    return {
+      loadoutItemNames,
+      derivedIngredientNames: new Set(farmingResultForUrl.derivedRecipeChoices.map((c) => c.ingredientName)),
+      genericIds: new Set(farmingResultForUrl.genericChoices.map((g) => g.genericId)),
+    }
+  }, [selectedItems, farmingResultForUrl])
+
+  useEffect(() => {
+    if (data === null) return
+    const params = filterCanonicalParamsToRelevant(
+      {
+        itemNames: selectedItems.map((i) => i.name),
+        slotCount,
+        recipeOverrides,
+        genericSelections,
+        derivedRecipeOverrides,
+        servingsOverrides,
+      },
+      relevantUrlContext,
+    )
+    const search = buildCanonicalSearchString(params)
     const url = window.location.pathname + search + window.location.hash
     window.history.replaceState(null, '', url)
   }, [
@@ -91,12 +151,8 @@ export default function App(): React.JSX.Element {
     genericSelections,
     derivedRecipeOverrides,
     servingsOverrides,
+    relevantUrlContext,
   ])
-
-  const [cardViewMode, setCardViewMode] = useState<'modifiers' | 'recipe'>('modifiers')
-
-  const itemsMap = useMemo(() => (data !== null ? buildItemsMap(data.items) : {}), [data])
-  const genericsMap = useMemo(() => (data !== null ? buildGenericsMap(data.generics) : {}), [data])
 
   if (loading) return <LoadingSpinner />
 

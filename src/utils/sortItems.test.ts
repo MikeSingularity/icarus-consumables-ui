@@ -39,6 +39,21 @@ describe('sortItems', () => {
     expect(sorted.map((i) => i.name)).toEqual(['itemD', 'itemA', 'itemC', 'itemB'])
   })
 
+  it('sorts by name ascending with key "name"', () => {
+    const sorted = sortItems(items, 'name')
+    expect(sorted.map((i) => i.name)).toEqual(['itemA', 'itemB', 'itemC', 'itemD'])
+  })
+
+  it('sorts by name with secondary sort by tier when display_name is equal', () => {
+    const sameName1 = makeItem('z', 2, {}, [])
+    const sameName2 = makeItem('z', 4, {}, [])
+    sameName1.display_name = 'Same'
+    sameName2.display_name = 'Same'
+    const sorted = sortItems([sameName1, sameName2], 'name')
+    expect(sorted[0].tier.total).toBe(4)
+    expect(sorted[1].tier.total).toBe(2)
+  })
+
   it('sorts by base stat descending with "base:<key>", items without stat go last', () => {
     const sorted = sortItems(items, 'base:BaseFoodRecovery_+')
     expect(sorted[0].name).toBe('itemA') // 150
@@ -71,9 +86,10 @@ describe('sortItems', () => {
 })
 
 describe('buildSortOptions', () => {
-  it('always includes Tier option first', () => {
+  it('always includes Tier then Name options first', () => {
     const opts = buildSortOptions([itemA], statMetadata)
     expect(opts[0]).toEqual({ key: 'tier', label: 'Tier' })
+    expect(opts[1]).toEqual({ key: 'name', label: 'Name' })
   })
 
   it('includes base stat options with display_name labels for stats present in items', () => {

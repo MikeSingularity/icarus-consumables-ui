@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   buildCanonicalSearchString,
+  filterCanonicalParamsToRelevant,
   parseFarmingParamsFromUrl,
   validateFarmingParams,
   type CanonicalUrlParams,
@@ -89,6 +90,54 @@ describe('buildCanonicalSearchString', () => {
     const search = buildCanonicalSearchString(emptyParams, '?foo=bar&baz=qux')
     expect(search).toContain('foo=bar')
     expect(search).toContain('baz=qux')
+  })
+})
+
+describe('filterCanonicalParamsToRelevant', () => {
+  it('strips derived overrides for ingredients not in relevant set', () => {
+    const params: CanonicalUrlParams = {
+      ...emptyParams,
+      itemNames: ['bread'],
+      derivedRecipeOverrides: { pastry: 'Pastry_Butter', flour: 'Flour_Recipe' },
+    }
+    const relevant = {
+      loadoutItemNames: new Set(['bread']),
+      derivedIngredientNames: new Set(['pastry']),
+      genericIds: new Set<string>(),
+    }
+    const filtered = filterCanonicalParamsToRelevant(params, relevant)
+    expect(filtered.derivedRecipeOverrides).toEqual({ pastry: 'Pastry_Butter' })
+  })
+
+  it('strips recipe and servings overrides for items not in loadout', () => {
+    const params: CanonicalUrlParams = {
+      ...emptyParams,
+      itemNames: ['bread'],
+      recipeOverrides: { bread: 'R1', removed: 'R2' },
+      servingsOverrides: { bread: 2, removed: 3 },
+    }
+    const relevant = {
+      loadoutItemNames: new Set(['bread']),
+      derivedIngredientNames: new Set<string>(),
+      genericIds: new Set<string>(),
+    }
+    const filtered = filterCanonicalParamsToRelevant(params, relevant)
+    expect(filtered.recipeOverrides).toEqual({ bread: 'R1' })
+    expect(filtered.servingsOverrides).toEqual({ bread: 2 })
+  })
+
+  it('strips generic selections for generic IDs not in relevant set', () => {
+    const params: CanonicalUrlParams = {
+      ...emptyParams,
+      genericSelections: { Any_Veg: 'carrot', Any_Fruit: 'apple' },
+    }
+    const relevant = {
+      loadoutItemNames: new Set<string>(),
+      derivedIngredientNames: new Set<string>(),
+      genericIds: new Set(['Any_Veg']),
+    }
+    const filtered = filterCanonicalParamsToRelevant(params, relevant)
+    expect(filtered.genericSelections).toEqual({ Any_Veg: 'carrot' })
   })
 })
 
