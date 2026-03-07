@@ -56,6 +56,19 @@ export function formatTalentLabel(talentKey: string): string {
 }
 
 /**
+ * Returns a display label for a recipe. Uses recipe.display_name when present
+ * (e.g. from data); otherwise humanizes the recipe id (e.g. "Crispy_Bacon_Butter" → "Crispy Bacon Butter").
+ * Most alternate recipes share the same bench, so the id-based label is more useful than the bench name.
+ */
+export function formatRecipeLabel(
+  recipeId: string,
+  recipe?: { display_name?: string } | null,
+): string {
+  if (recipe?.display_name) return recipe.display_name
+  return recipeId.replace(/_/g, ' ')
+}
+
+/**
  * Returns a short label for a base stat display name by stripping the " when ..." suffix.
  * Example: "Food when Consumed" → "Food", "Health when Consumed" → "Health".
  * Falls back to the full display_name if no such suffix is present.

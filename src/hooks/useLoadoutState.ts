@@ -27,21 +27,37 @@ function readSlotCount(): number {
   }
 }
 
-/** Returns item names encoded in the ?items= URL parameter. */
-function readItemNamesFromUrl(): string[] {
-  const params = new URLSearchParams(window.location.search)
-  return params.get('items')?.split(',').filter(Boolean) ?? []
+/** Slot count for initial state: URL wins over localStorage so shared links restore correctly. */
+function getInitialSlotCount(): number {
+  const url = readSlotCountFromUrl()
+  if (url !== null) {
+    try {
+      localStorage.setItem(LS_KEYS.SLOTS, String(url))
+    } catch {
+      // ignore
+    }
+    return url
+  }
+  return readSlotCount()
 }
 
-/** Writes selected item names into the URL without a page reload. */
-function writeItemsToUrl(items: Item[]): void {
-  const url = new URL(window.location.href)
-  if (items.length === 0) {
-    url.searchParams.delete('items')
-  } else {
-    url.searchParams.set('items', items.map((i) => i.name).join(','))
-  }
-  window.history.replaceState(null, '', url.toString())
+const URL_PARAM_ITEMS = 'i'
+const URL_PARAM_SLOTS = 'l'
+
+/** Returns item names from the ?i= URL parameter (comma-separated, no encoding). */
+function readItemNamesFromUrl(): string[] {
+  const params = new URLSearchParams(window.location.search)
+  return params.get(URL_PARAM_ITEMS)?.split(',').filter(Boolean) ?? []
+}
+
+/** Returns slot count from the ?l= URL parameter (1–5), or null if missing/invalid. */
+function readSlotCountFromUrl(): number | null {
+  const params = new URLSearchParams(window.location.search)
+  const v = params.get(URL_PARAM_SLOTS)
+  if (v === null) return null
+  const n = parseInt(v, 10)
+  if (isNaN(n) || n < 1 || n > 5) return null
+  return n
 }
 
 /**
@@ -56,8 +72,8 @@ function findConflict(candidate: Item, selected: Item[]): Item | undefined {
 /**
  * Manages loadout selection state with slot count, conflict detection, and URL sync.
  *
- * - Slot count persisted in localStorage (1–5, default 3).
- * - Selected items encoded in the URL (?items=name1,name2) for shareability.
+ * - Slot count persisted in localStorage (1–5, default 3). URL (?i=, ?l=, farming params) is written by the app via the canonical URL builder.
+ * - Selected items are restored from URL (?i=name1,name2) when data is ready.
  * - Hard block: items that share any modifier ID with an already-selected item
  *   are rejected; a ConflictInfo is returned so the UI can explain why.
  * - Accepts allItems as null while data is loading; URL restore runs once on load.
@@ -71,7 +87,7 @@ export function useLoadoutState(allItems: Item[] | null): {
   clearLoadout: () => void
   dismissConflict: () => void
 } {
-  const [slotCount, setSlotCountState] = useState<number>(readSlotCount)
+  const [slotCount, setSlotCountState] = useState<number>(getInitialSlotCount)
   const [loadoutState, setLoadoutState] = useState<LoadoutState>({
     selectedItems: [],
     conflict: null,
@@ -81,7 +97,7 @@ export function useLoadoutState(allItems: Item[] | null): {
   // without being re-triggered whenever the user changes the slot count later.
   const slotCountRef = useRef(slotCount)
 
-  // Restore selected items from URL once the dataset is available.
+  // Restore selected items from URL once the dataset is available. Slot count already from URL in getInitialSlotCount().
   useEffect(() => {
     if (allItems === null) return
     const names = readItemNamesFromUrl()
@@ -101,7 +117,6 @@ export function useLoadoutState(allItems: Item[] | null): {
         // Deselect if already in the loadout.
         if (selectedItems.some((s) => s.name === item.name)) {
           const next = selectedItems.filter((s) => s.name !== item.name)
-          writeItemsToUrl(next)
           return { selectedItems: next, conflict: null }
         }
 
@@ -117,7 +132,6 @@ export function useLoadoutState(allItems: Item[] | null): {
         }
 
         const next = [...selectedItems, item]
-        writeItemsToUrl(next)
         return { selectedItems: next, conflict: null }
       })
     },
@@ -131,15 +145,12 @@ export function useLoadoutState(allItems: Item[] | null): {
     localStorage.setItem(LS_KEYS.SLOTS, String(clamped))
     setLoadoutState((prev) => {
       if (prev.selectedItems.length <= clamped) return prev
-      const next = prev.selectedItems.slice(0, clamped)
-      writeItemsToUrl(next)
-      return { selectedItems: next, conflict: null }
+      return { selectedItems: prev.selectedItems.slice(0, clamped), conflict: null }
     })
   }, [])
 
   const clearLoadout = useCallback(() => {
     setLoadoutState({ selectedItems: [], conflict: null })
-    writeItemsToUrl([])
   }, [])
 
   const dismissConflict = useCallback(() => {

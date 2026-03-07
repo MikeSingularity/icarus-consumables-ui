@@ -10,7 +10,10 @@
       "Bash(pnpm lint)",
       "Bash(pnpm build)",
       "Bash(pnpm run lint)",
-      "Bash(pnpm vitest run)"
+      "Bash(pnpm vitest run)",
+      "Bash(pnpm run typecheck)",
+      "Bash(pnpm tsc --noEmit)",
+      "Bash(bash /home/mike/Projects/mike-singularity/icarus-consumables-ui/scripts/fetch-data.sh)"
     ],
     "additionalDirectories": [
       "/home/mike/Projects/mike-singularity/icarus-consumables-ui"

@@ -8,7 +8,6 @@ export const MODIFIER_SORT_CATEGORIES = [
   'Health',
   'Stamina',
   'Experience',
-  'Character',
   'Weather',
   'Mining',
   'Melee Weapon',

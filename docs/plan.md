@@ -55,7 +55,7 @@
 
 **Data URL constant:** `src/constants/api.ts` exports `DATA_URL`, which reads `import.meta.env.VITE_DATA_URL` and falls back to the authoritative GitHub Pages URL. No hardcoded URLs elsewhere in the codebase.
 
-**Local development:** `.env.development` sets `VITE_DATA_URL=/icarus_consumables.min.json`, pointing the app at a local copy served by the Vite dev server from `public/`. This file is gitignored and not bundled into the production build. Run `scripts/fetch-data.sh` to download or refresh it. In production (Cloudflare Pages), no env var is set, so `DATA_URL` automatically falls back to the GitHub Pages URL.
+**Local development:** `.env.development` sets `VITE_DATA_URL=/icarus_consumables.min.json`, pointing the app at a local copy served by the Vite dev server from `public-dev/`. This file is gitignored and not bundled into the production build. Run `scripts/fetch-data.sh` to download or refresh it. In production (Cloudflare Pages), no env var is set, so `DATA_URL` automatically falls back to the GitHub Pages URL.
 
 **Fetch:** At app startup, fetch the JSON from `DATA_URL`. Cache the result in module scope for the session lifetime. Handle loading and error states explicitly.
 

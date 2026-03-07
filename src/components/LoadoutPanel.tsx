@@ -1,11 +1,21 @@
-import { aggregateBaseStats, aggregateModifierEffects, collectModifiers } from '@/utils/aggregateStats'
-import { formatLifetime, formatEffectKey, formatEffectValue, formatBaseStatLabel } from '@/utils/formatters'
+import {
+  aggregateBaseStats,
+  aggregateModifierEffects,
+  collectModifiers,
+} from '@/utils/aggregateStats'
+import { getDurationMultiplier } from '@/utils/farmingCalc'
+import {
+  formatLifetime,
+  formatEffectKey,
+  formatEffectValue,
+  formatBaseStatLabel,
+} from '@/utils/formatters'
 import { BASE_STAT_DISPLAY_ORDER } from '@/constants/categories'
 import type { Item, Modifier, StatMetadataEntry } from '@/types/consumables'
 import type { ConflictInfo } from '@/hooks/useLoadoutState'
 
 /** Effect key promoted out of the modifier list into the base stats row. */
-const PROMOTED_EFFECT_KEY = 'BaseFoodStomachSlots'
+const PROMOTED_EFFECT_KEY = 'BaseFoodStomachSlots_+'
 
 interface LoadoutPanelProps {
   selectedItems: Item[]
@@ -40,7 +50,18 @@ export function LoadoutPanel({
 
   const presentBaseKeys = BASE_STAT_DISPLAY_ORDER.filter((k) => k in aggBaseStats)
   const promotedSlots = aggEffects[PROMOTED_EFFECT_KEY]
-  const effectEntries = Object.entries(aggEffects).filter(([k]) => k !== PROMOTED_EFFECT_KEY)
+  const effectEntries = Object.entries(aggEffects)
+    .filter(([k]) => k !== PROMOTED_EFFECT_KEY)
+    .sort(([a], [b]) =>
+      formatEffectKey(a, statMetadata).localeCompare(formatEffectKey(b, statMetadata)),
+    )
+  const sortedModifiers = [...activeModifiers].sort((a, b) =>
+    a.display_name.localeCompare(b.display_name),
+  )
+  const durationMultiplier =
+    selectedItems.length > 0
+      ? getDurationMultiplier(selectedItems, modifiers, statMetadata)
+      : 1
 
   return (
     <div className="border-b border-gray-800 bg-gray-900 px-4 py-3">
@@ -95,14 +116,14 @@ export function LoadoutPanel({
         </div>
       )}
 
-      {/* Item slots */}
-      <div className="flex gap-2">
+      {/* Item slots — stacked vertically for readability */}
+      <div className="flex flex-col gap-2">
         {Array.from({ length: slotCount }).map((_, i) => {
           const item = selectedItems[i]
           return (
             <div
               key={i}
-              className={`flex min-w-0 flex-1 items-center justify-between rounded border px-2 py-1.5 ${
+              className={`flex min-w-0 items-center justify-between rounded border px-2 py-1.5 ${
                 item !== undefined
                   ? 'border-blue-700 bg-gray-800'
                   : 'border-dashed border-gray-700 bg-gray-800/40'
@@ -139,7 +160,9 @@ export function LoadoutPanel({
               <div className="flex flex-wrap gap-x-4 gap-y-0.5">
                 {presentBaseKeys.map((k) => (
                   <span key={k} className="text-xs text-gray-300">
-                    <span className="text-gray-400">{formatBaseStatLabel(statMetadata[k]?.display_name ?? k)}</span>{' '}
+                    <span className="text-gray-400">
+                      {formatBaseStatLabel(statMetadata[k]?.display_name ?? k)}
+                    </span>{' '}
                     {aggBaseStats[k]}
                   </span>
                 ))}
@@ -158,27 +181,34 @@ export function LoadoutPanel({
               <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500">
                 Active Buffs
               </p>
-              {/* Per-modifier names with lifetimes */}
-              <div className="mb-1.5 flex flex-wrap gap-x-4 gap-y-0.5">
-                {activeModifiers.map((mod) => (
-                  <span key={mod.id} className="text-xs text-gray-300">
-                    {mod.display_name}
-                    <span className="ml-1 text-gray-500">{formatLifetime(mod.lifetime)}</span>
-                  </span>
-                ))}
-              </div>
+              <ul className="mb-1.5 list-inside list-disc space-y-0.5 pl-1 [&_li]:pl-0 text-xs text-gray-300">
+                {sortedModifiers.map((mod) => {
+                  const effectiveLifetime =
+                    mod.lifetime > 0 ? mod.lifetime * durationMultiplier : mod.lifetime
+                  return (
+                    <li key={mod.id}>
+                      {mod.display_name}
+                      <span className="ml-1 text-gray-500">
+                        {formatLifetime(effectiveLifetime)}
+                      </span>
+                    </li>
+                  )
+                })}
+              </ul>
               {/* Summed effects across all active modifiers */}
               {effectEntries.length > 0 && (
-                <div className="flex flex-wrap gap-x-4 gap-y-0.5">
+                <ul className="list-inside list-disc space-y-0.5 pl-1 [&_li]:pl-0 text-xs">
                   {effectEntries.map(([statKey, value]) => (
-                    <span key={statKey} className="text-xs">
-                      <span className={statKey in statMetadata ? 'text-gray-400' : 'text-yellow-600'}>
+                    <li key={statKey}>
+                      <span
+                        className={statKey in statMetadata ? 'text-gray-400' : 'text-yellow-600'}
+                      >
                         {formatEffectKey(statKey, statMetadata)}
                       </span>{' '}
                       <span className="text-gray-200">{formatEffectValue(statKey, value)}</span>
-                    </span>
+                    </li>
                   ))}
-                </div>
+                </ul>
               )}
             </div>
           )}

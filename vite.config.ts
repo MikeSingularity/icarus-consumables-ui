@@ -7,8 +7,9 @@ import { fileURLToPath } from 'url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react(), tailwindcss()],
+  publicDir: mode === 'development' ? 'public-dev' : 'public',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
@@ -18,4 +19,4 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.test.ts'],
   },
-})
+}))

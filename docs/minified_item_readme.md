@@ -33,17 +33,56 @@ An array of consumable items.
 | :--- | :--- | :--- |
 | `name` | string | Internal ID (normalized). |
 | `display_name` | string | Localized human-readable name. |
-| `category` | string | Practical classification (Food, Drink, Workshop). |
+| `description` | string | (Optional) Human-readable flavor text. |
+| `category` | string | Practical classification: `Animal Parts`, `Drink`, `Food`, `Ingredient`, `Miscellaneous`, `Plant`, `Resources`. |
 | `tier` | object | `{ "total": 2.3, "anchor": "Crafting_Bench" }`. |
 | `base_stats` | object | Direct permanent stats e.g. `{ "Food": 50 }`. |
 | `modifiers` | array | List of modifier IDs attached to this item. |
 | `modifier_stats`| object | Accumulated score by category (e.g. `{"Health": 120}`) for sorting. |
 | `recipes` | array | List of recipe IDs that produce this item. |
+| `source_ids` | object | (Optional) Internal IDs from game data tables (e.g., `D_Consumable`). |
 | `source_item` | string | (Optional) The raw item/carcass this is derived from. |
 | `talent_requirement`| string | (Optional) Talent ID required to unlock. |
 | `required_features` | array | (Optional) Feature IDs required for this item. |
-| `traits` | object | (Optional) Booleans like `is_harvested`, `is_override`. |
+| `traits` | object | (Optional) Booleans for item properties (see [Item Traits](#item-traits)). |
 | `growth_data` | object | (Optional) Farming info if applicable. |
+
+### 3.1 Item Traits (`traits`)
+
+Boolean flags used for filtering and categorization logic.
+
+| Trait | Description |
+| :--- | :--- |
+| `is_berry` | Item is a type of berry. |
+| `is_cake` | Item is a cake or pastry. |
+| `is_cooked` | General flag for cooked items. |
+| `is_cooked_chicken` | Specifically cooked chicken. |
+| `is_cooked_egg` | Specifically cooked egg. |
+| `is_cooked_fish` | Specifically cooked fish. |
+| `is_cooked_fruit` | Specifically cooked fruit. |
+| `is_cooked_fungi` | Specifically cooked mushroom/fungi. |
+| `is_cooked_grain` | Specifically cooked grain/bread. |
+| `is_cooked_honey` | Specifically cooked honey products. |
+| `is_cooked_meat` | Specifically cooked meat. |
+| `is_cooked_vege` | Specifically cooked vegetable. |
+| `is_corn` | Specifically corn. |
+| `is_decay_product` | Result of decay (e.g., Spoiled Meat). |
+| `is_fruit` | Item is a fruit. |
+| `is_grain` | Item is a grain. |
+| `is_harvested` | Item is obtained via harvesting/foraging. |
+| `is_herb` | Item is an herb. |
+| `is_honey` | Item is honey. |
+| `is_inedible` | Item cannot be consumed directly. |
+| `is_ingredient` | Item is primarily used as a recipe ingredient. |
+| `is_override` | Item has manually overridden data. |
+| `is_pumpkin` | Specifically pumpkin. |
+| `is_raw` | Item is raw/uncooked. |
+| `is_raw_prime` | Specifically raw prime meat. |
+| `is_speciality` | Item is a specialty plant. |
+| `is_spoiled` | Item is spoiled. |
+| `is_squash` | Specifically squash. |
+| `is_vegetable` | Item is a vegetable. |
+| `is_watermelon` | Specifically watermelon. |
 
 ## 3. Recipes (`recipes`)
 
@@ -72,6 +111,7 @@ A dictionary of recipes indexed by ID.
 | `name` | string | Internal ID of the produced item. |
 | `display_name` | string | Localized name. |
 | `yields_count` | number | Average quantity produced. |
+| `recipe_produces` | object | (Optional) `{ "name": "IntermediateID", "yields_count": count }` - Only if the direct output differs from the final product (e.g., Cake -> 8 Pieces). |
 | `yields_min` | number | (Optional) Minimum quantity. |
 | `yields_max` | number | (Optional) Maximum quantity. |
 

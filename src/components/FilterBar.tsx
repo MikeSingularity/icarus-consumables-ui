@@ -17,6 +17,8 @@ interface FilterBarProps {
   disabledFeatures: Set<string>
   onToggleFeature: (feature: string) => void
   onEnableAllFeatures: () => void
+  cardViewMode: 'modifiers' | 'recipe'
+  onCardViewModeChange: (mode: 'modifiers' | 'recipe') => void
 }
 
 /**
@@ -37,6 +39,8 @@ export function FilterBar({
   disabledFeatures,
   onToggleFeature,
   onEnableAllFeatures,
+  cardViewMode,
+  onCardViewModeChange,
 }: FilterBarProps): React.JSX.Element {
   const [talentModalOpen, setTalentModalOpen] = useState(false)
   const [featureModalOpen, setFeatureModalOpen] = useState(false)
@@ -58,6 +62,32 @@ export function FilterBar({
             />
             <span className="w-4 text-center text-gray-100">{tier}</span>
           </label>
+
+          {/* Card view: Modifiers | Recipe */}
+          <div className="flex items-center gap-1 rounded border border-gray-700 bg-gray-800 p-0.5">
+            <button
+              type="button"
+              onClick={() => onCardViewModeChange('modifiers')}
+              className={`rounded px-2 py-1 text-xs font-medium transition-colors ${
+                cardViewMode === 'modifiers'
+                  ? 'bg-gray-600 text-gray-100'
+                  : 'text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              Modifiers
+            </button>
+            <button
+              type="button"
+              onClick={() => onCardViewModeChange('recipe')}
+              className={`rounded px-2 py-1 text-xs font-medium transition-colors ${
+                cardViewMode === 'recipe'
+                  ? 'bg-gray-600 text-gray-100'
+                  : 'text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              Recipe
+            </button>
+          </div>
 
           {/* Sort dropdown */}
           <label className="flex items-center gap-2 text-sm text-gray-300">

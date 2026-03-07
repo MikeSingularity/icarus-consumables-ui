@@ -12,6 +12,13 @@ interface ConsumableGridProps {
   selectedNames: Set<string>
   blockedModIds: Set<string>
   onToggleItem: (item: Item) => void
+  cardViewMode: 'modifiers' | 'recipe'
+  itemsMap: Record<string, Item>
+  recipeOverrides: Record<string, string>
+  genericSelections: Record<string, string>
+  genericsMap: Record<string, string[]>
+  onSetRecipe: (itemName: string, recipeId: string) => void
+  onSetGeneric: (genericId: string, itemName: string) => void
 }
 
 /**
@@ -27,10 +34,17 @@ export function ConsumableGrid({
   selectedNames,
   blockedModIds,
   onToggleItem,
+  cardViewMode,
+  itemsMap,
+  recipeOverrides,
+  genericSelections,
+  genericsMap,
+  onSetRecipe,
+  onSetGeneric,
 }: ConsumableGridProps): React.JSX.Element {
   const { tier, sortKey, disabledTalents, disabledFeatures } = filterState
 
-  const tierFiltered = items.filter((item) => item.tier.total <= tier)
+  const tierFiltered = items.filter((item) => Math.floor(item.tier.total) <= tier)
   const sorted = sortItems(tierFiltered, sortKey)
 
   if (sorted.length === 0) {
@@ -62,6 +76,14 @@ export function ConsumableGrid({
               item.modifiers.some((mid) => blockedModIds.has(mid))
             }
             onClick={() => onToggleItem(item)}
+            viewMode={cardViewMode}
+            isInLoadout={selectedNames.has(item.name)}
+            itemsMap={itemsMap}
+            recipeOverrides={recipeOverrides}
+            genericSelections={genericSelections}
+            genericsMap={genericsMap}
+            onSetRecipe={onSetRecipe}
+            onSetGeneric={onSetGeneric}
           />
         )
       })}
