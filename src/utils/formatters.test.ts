@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { formatLifetime, formatEffectKey, formatEffectValue, formatTalentLabel } from './formatters'
+import {
+  formatLifetime,
+  formatBuffLabel,
+  formatEffectKey,
+  formatEffectValue,
+  formatTalentLabel,
+} from './formatters'
 import type { StatMetadataEntry } from '@/types/consumables'
 
 const statMetadata: Record<string, StatMetadataEntry> = {
@@ -7,6 +13,24 @@ const statMetadata: Record<string, StatMetadataEntry> = {
   'BaseMaximumStamina_+': { display_name: 'Max Stamina', categories: ['Stamina'] },
   'BaseFoodStomachSlots_+': { display_name: 'Consumes Space in Stomach', categories: ['Consumption'] },
 }
+
+describe('formatBuffLabel', () => {
+  it('returns abbreviated label when mapping exists', () => {
+    expect(formatBuffLabel('Chance to find additional Stone while Mining')).toBe(
+      "Add'l Stone while Mining",
+    )
+    expect(formatBuffLabel('Experience Gained for Tamed Creatures')).toBe('Exp. Gain for Tames')
+    expect(formatBuffLabel('Chance to Return Melee Physical Damage to Attacker')).toBe(
+      'Reflect Melee Damage',
+    )
+    expect(formatBuffLabel('Melee Physical Damage Returned')).toBe('Melee Damage Returned')
+  })
+
+  it('returns original label when no mapping exists', () => {
+    expect(formatBuffLabel('Max Health')).toBe('Max Health')
+    expect(formatBuffLabel('Food Effects Duration')).toBe('Food Effects Duration')
+  })
+})
 
 describe('formatLifetime', () => {
   it('returns "Instant" for 0 seconds', () => {
@@ -43,6 +67,16 @@ describe('formatEffectKey', () => {
 
   it('strips Granted prefix when deriving', () => {
     expect(formatEffectKey('GrantedAuraTamingSpeed_?', statMetadata)).toBe('Aura Taming Speed')
+  })
+
+  it('abbreviates long stat display_name via formatBuffLabel', () => {
+    const longStatMeta: Record<string, StatMetadataEntry> = {
+      'SomeStat_+': {
+        display_name: 'Experience Gained for Tamed Creatures',
+        categories: ['Taming'],
+      },
+    }
+    expect(formatEffectKey('SomeStat_+', longStatMeta)).toBe('Exp. Gain for Tames')
   })
 })
 

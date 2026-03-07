@@ -4,6 +4,7 @@ import {
   formatEffectKey,
   formatEffectValue,
   formatBaseStatLabel,
+  formatBuffLabel,
   formatRecipeLabel,
 } from '@/utils/formatters'
 import { getEffectiveRecipeId, getAvailableRecipeIds } from '@/utils/farmingCalc'
@@ -276,7 +277,7 @@ export function ConsumableCard({
               {resolvedModifiers.map((mod) => (
                 <div key={mod.id}>
                   <div className="flex items-baseline justify-between gap-1">
-                    <span className="text-xs font-medium text-gray-200">{mod.display_name}</span>
+                    <span className="text-xs font-medium text-gray-200">{formatBuffLabel(mod.display_name)}</span>
                     <span className="shrink-0 text-xs text-gray-400">
                       {formatLifetime(mod.lifetime)}
                     </span>

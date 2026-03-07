@@ -9,6 +9,7 @@ import {
   formatEffectKey,
   formatEffectValue,
   formatBaseStatLabel,
+  formatBuffLabel,
 } from '@/utils/formatters'
 import { BASE_STAT_DISPLAY_ORDER } from '@/constants/categories'
 import type { Item, Modifier, StatMetadataEntry } from '@/types/consumables'
@@ -187,7 +188,7 @@ export function LoadoutPanel({
                     mod.lifetime > 0 ? mod.lifetime * durationMultiplier : mod.lifetime
                   return (
                     <li key={mod.id}>
-                      {mod.display_name}
+                      {formatBuffLabel(mod.display_name)}
                       <span className="ml-1 text-gray-500">
                         {formatLifetime(effectiveLifetime)}
                       </span>

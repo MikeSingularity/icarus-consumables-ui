@@ -1,4 +1,13 @@
+import { BUFF_ABBREVIATIONS } from '@/constants/buffAbbreviations'
 import type { StatMetadataEntry } from '@/types/consumables'
+
+/**
+ * Returns an abbreviated label for long buff/stat names when available.
+ * Used for modifier display_name and stat_metadata display_name in the UI.
+ */
+export function formatBuffLabel(label: string): string {
+  return BUFF_ABBREVIATIONS[label] ?? label
+}
 
 /**
  * Formats a modifier lifetime in seconds into a human-readable duration string.
@@ -24,7 +33,7 @@ export function formatEffectKey(
   statMetadata: Record<string, StatMetadataEntry>,
 ): string {
   const meta = statMetadata[statKey]
-  if (meta) return meta.display_name
+  if (meta) return formatBuffLabel(meta.display_name)
 
   let key = statKey.replace(/_[+%?]*$/, '') // strip suffix e.g. _+, _%, _+%, _?
   if (key.startsWith('Base')) key = key.slice(4)
