@@ -200,11 +200,18 @@ export default function App(): React.JSX.Element {
   const selectedNames = new Set(selectedItems.map((item) => item.name))
   const blockedModIds = new Set(selectedItems.flatMap((item) => item.modifiers))
 
+  const { game_version, generated_date, parser_version, parse_date } = data.metadata
+
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100">
+    <div className="flex min-h-screen flex-col bg-gray-950 text-gray-100">
       <header className="sticky top-0 z-20 border-b border-gray-800 bg-gray-900 px-4 py-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h1 className="text-lg font-bold text-gray-100">Icarus Consumables</h1>
+          <div className="flex flex-wrap items-baseline gap-3">
+            <h1 className="text-lg font-bold text-gray-100">Icarus Consumables</h1>
+            <span className="text-sm text-gray-400">
+              Icarus Version {game_version} · Generated Date {generated_date}
+            </span>
+          </div>
           <nav className="flex items-center gap-4 text-sm">
             <button
               type="button"
@@ -254,7 +261,7 @@ export default function App(): React.JSX.Element {
         />
       </div>
 
-      <div className="flex flex-col lg:flex-row lg:items-start">
+      <div className="min-h-0 flex-1 flex flex-col lg:flex-row lg:items-start">
         <main className="min-w-0 flex-1">
           <ConsumableGrid
             items={items}
@@ -305,6 +312,10 @@ export default function App(): React.JSX.Element {
           />
         </aside>
       </div>
+
+      <footer className="mt-auto border-t border-gray-800 bg-gray-900 px-4 py-2 text-center text-xs text-gray-500">
+        Parser {parser_version} · Parsed {parse_date}
+      </footer>
     </div>
   )
 }

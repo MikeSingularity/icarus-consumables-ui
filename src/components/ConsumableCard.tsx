@@ -8,6 +8,7 @@ import {
   formatRecipeLabel,
 } from '@/utils/formatters'
 import { getEffectiveRecipeId, getAvailableRecipeIds } from '@/utils/farmingCalc'
+import { dlcColour } from '@/utils/dlcbadge'
 import { BASE_STAT_DISPLAY_ORDER } from '@/constants/categories'
 import type { Item, Modifier, Recipe, StatMetadataEntry } from '@/types/consumables'
 
@@ -45,27 +46,6 @@ interface ConsumableCardProps {
  * Virtually every food item carries this at value 1; hoisting it avoids a repetitive effect row.
  */
 const PROMOTED_EFFECT_KEY = 'BaseFoodStomachSlots_+'
-
-/**
- * Distinct Tailwind colour classes cycled per DLC feature name.
- * Hashing the name string gives a stable colour across renders and data changes.
- */
-const DLC_COLOURS = [
-  'text-amber-400',
-  'text-rose-400',
-  'text-violet-400',
-  'text-lime-400',
-  'text-sky-400',
-  'text-orange-400',
-] as const
-
-function dlcColour(feature: string): string {
-  let hash = 0
-  for (let i = 0; i < feature.length; i++) {
-    hash = (hash * 31 + feature.charCodeAt(i)) >>> 0
-  }
-  return DLC_COLOURS[hash % DLC_COLOURS.length] ?? 'text-amber-400'
-}
 
 /** Colour classes for the tier badge by tier.total value. */
 const TIER_COLOURS: Record<number, string> = {

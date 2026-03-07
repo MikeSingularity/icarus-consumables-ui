@@ -1,3 +1,6 @@
+import { PackageOpen } from 'lucide-react'
+import { dlcColour } from '@/utils/dlcbadge'
+
 interface FeatureModalProps {
   /** Dict mapping feature IDs to their display names. */
   featureNames: Record<string, string>
@@ -64,9 +67,14 @@ export function FeatureModal({
                 />
                 <label
                   htmlFor={`feature-${id}`}
-                  className="cursor-pointer text-sm text-gray-200"
+                  className="flex flex-1 cursor-pointer items-center gap-2 text-sm text-gray-200"
                 >
                   {displayName}
+                  <PackageOpen
+                    size={14}
+                    className={`shrink-0 ${dlcColour(id)}`}
+                    aria-hidden
+                  />
                 </label>
               </li>
             ))}
