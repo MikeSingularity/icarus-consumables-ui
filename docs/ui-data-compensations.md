@@ -1,84 +1,60 @@
 # UI Data Compensations
 
-This document describes the three places where the UI actively compensates for
-missing or malformed data in `icarus_consumables.min.json`. Each section states
-what the compensation does, where it lives in the code, what triggers it, and
-what the correct data-side fix looks like.
+This document describes where the UI compensates for missing or malformed data in the consumables JSON (`icarus_consumables.min.json`). For each case we state what the compensation does, where it lives, what triggers it, and what the correct data-side fix is.
+
+The application uses the top-level key `stats` (not `stat_metadata`) for stat metadata; each entry has `display_name` (and optionally `unit`, `categories`). Modifier effect keys and values live in `modifiers[*].stats`.
 
 ---
 
-## 1. Malformed `stat_metadata` labels containing `%`
+## 1. Malformed `stats` entry: `display_name` containing `%`
 
 ### What the UI does
 
 `formatEffectKey` in `src/utils/formatters.ts` has two paths:
 
-1. **Key found in `stat_metadata`** — returns `meta.label` as-is.
-2. **Key absent from `stat_metadata`** — strips the trailing `%` from the key
-   name, strips the `Base` or `Granted` prefix, then splits CamelCase into
-   words (e.g. `BaseHealthRegen%` → `Health Regen`).
+1. **Key present in `stats`** — returns `formatBuffLabel(meta.display_name)` (abbreviation applied; otherwise the label as-is). If `display_name` itself contains a trailing `%` (e.g. `HealthRegen%`), that is shown verbatim.
+2. **Key absent from `stats`** — derives a label from the key: strip suffix `_[+%?]*`, strip `Base`/`Granted`, split CamelCase into words. That path is never used when the key exists, so malformed labels in the data are not auto-corrected.
 
-Currently, some keys **are** present in `stat_metadata` but have labels that
-themselves contain a trailing `%` (e.g. the label for `BaseHealthRegen%` is
-`HealthRegen%`). Because the key is found, the UI takes path 1 and returns the
-malformed label verbatim. The CamelCase cleanup in path 2 never runs.
+In `ConsumableCard` and `LoadoutPanel`, effect keys **absent** from `stats` are rendered in `text-yellow-600` as a QA signal. Keys that are present but have a malformed `display_name` do **not** get this highlight, because they are technically in `stats`.
 
-As a QA signal, `ConsumableCard.tsx` renders any stat key that is **absent**
-from `stat_metadata` in `text-yellow-600`. Keys with malformed labels do
-**not** trigger this highlight because they are technically present.
+### Known affected keys (examples)
 
-### Known affected keys
+| Stat key (example) | Current `display_name` (malformed) | Expected |
+| --- | --- | --- |
+| `BaseHealthRegen_+%` (or as in data) | `HealthRegen%` | `Health Regen` |
+| `BaseStaminaRegen_+%` | `StaminaRegen%` | `Stamina Regen` |
 
-| Stat key | Current label | Expected label |
-| :--- | :--- | :--- |
-| `BaseHealthRegen%` | `HealthRegen%` | `Health Regen` |
-| `BaseStaminaRegen%` | `StaminaRegen%` | `Stamina Regen` |
-| `BaseSharedExperience%` (unconfirmed key name) | `SharedExperience%` | `Shared Experience` |
+The `%` belongs on the **value** (handled by `formatEffectValue`), not in the stat label.
 
 ### Data fix
 
-For every `stat_metadata` entry whose `label` value ends with `%`, remove the
-`%` and insert spaces between CamelCase words so the label reads as natural
-English. The `%` belongs on the formatted **value** (handled by
-`formatEffectValue`), not the label.
+For every `stats` entry whose `display_name` ends with `%`, remove the `%` and format as readable text (e.g. CamelCase to words). Ensure all modifier effect keys used in `modifiers[*].stats` have a corresponding `stats` entry with a clean `display_name`.
 
 ---
 
-## 2. Fallback label derivation for keys absent from `stat_metadata`
+## 2. Fallback label when key is absent from `stats`
 
 ### What the UI does
 
-When a modifier effect key has **no entry at all** in `stat_metadata`,
-`formatEffectKey` derives a display label automatically:
+When a modifier effect key has **no** entry in `stats`, `formatEffectKey` derives a label:
 
-1. Strip trailing `%` if present.
-2. Strip leading `Base` or `Granted` prefix.
-3. Split remaining CamelCase string into space-separated words.
+1. Strip suffix `_[+%?]*` from the key.
+2. Strip leading `Base` or `Granted`.
+3. Split CamelCase into space-separated words.
 
-Example: an unknown key `BaseMovementSpeed%` would render as `Movement Speed`.
-
-The derived label is shown in `text-yellow-600` on the card as a visual
-indicator that the key is unrecognised. This makes it easy to spot any key
-the data parser forgot to include.
+Example: unknown key `BaseMovementSpeed_+%` renders as “Movement Speed”. The derived label is shown in `text-yellow-600` on the card and in the loadout panel as a QA signal that the key is not in `stats`.
 
 ### Data fix
 
-Every modifier effect key that appears in `modifiers[*].effects` should have a
-corresponding entry in `stat_metadata` with a human-readable `label` and at
-least one `categories` entry. When a new modifier is added to the game, its
-stat keys must be added to `stat_metadata` at the same time.
-
-Once a key is added to `stat_metadata`, its yellow highlight disappears
-automatically — this is the intended verification signal.
+Every key that appears in `modifiers[*].stats` should have an entry in the top-level `stats` object with a human-readable `display_name` and at least one `categories` entry. Adding the key to `stats` removes the yellow highlight automatically.
 
 ---
 
-## 3. Missing top-level `features` dictionary
+## 3. Missing or empty top-level `features` dictionary
 
 ### What the UI does
 
-`App.tsx` builds the DLC feature display-name map used by `FilterBar` and
-`FeatureModal`. It prefers the top-level `features` dict from the JSON:
+`App.tsx` builds the DLC/feature display-name map for `FilterBar` and the feature modal. It prefers the top-level `features` object from the JSON:
 
 ```typescript
 const featureNames: Record<string, string> =
@@ -89,23 +65,23 @@ const featureNames: Record<string, string> =
       )
 ```
 
-If `data.features` is null or empty, it falls back to collecting all unique
-feature ID strings from `item.required_features` across all items and using
-the raw ID as the display name (e.g. `"Styx"` instead of `"Styx Expansion"`).
-
-The DLC filter still functions correctly in this fallback state, but users see
-internal IDs rather than friendly names.
+If `data.features` is null or empty, it falls back to the set of feature IDs from `item.required_features` across all items and uses the raw ID as the display name (e.g. `"Styx"` instead of `"Styx Expansion"`). The DLC filter still works, but users see internal IDs.
 
 ### Data fix
 
-Ensure the top-level `features` object is always present and populated in the
-output JSON, mapping every feature ID that appears on any item to its
-public-facing display name. The current expected mapping is:
+Ensure the top-level `features` object is always present and populated: every feature ID that appears on any item should be mapped to its public display name. Example:
 
 | ID | Display name |
-| :--- | :--- |
+| --- | --- |
 | `Styx` | `Styx Expansion` |
 | `Homestead` | `Homestead` |
 
-Any new DLC added to the game must be added here at the same time its items
-are included in the data.
+New DLCs should be added to `features` when their items are added to the data.
+
+---
+
+## Reference
+
+- Stat metadata types: `src/types/consumables.ts` — `StatMetadataEntry` with `display_name`, `unit`, `categories`.
+- Formatting: `src/utils/formatters.ts` — `formatEffectKey`, `formatEffectValue`, `formatBuffLabel`.
+- Data schema: `docs/minified_item_readme.md`.

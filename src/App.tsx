@@ -16,6 +16,9 @@ import { FilterBar } from '@/components/FilterBar'
 import { ConsumableGrid } from '@/components/ConsumableGrid'
 import { LoadoutPanel } from '@/components/LoadoutPanel'
 import { FarmingPanel } from '@/components/FarmingPanel'
+import { HowToModal } from '@/components/HowToModal'
+import { QrCodeModal } from '@/components/QrCodeModal'
+import { ISSUES_URL } from '@/constants/appLinks'
 
 /**
  * Root application component.
@@ -77,6 +80,8 @@ export default function App(): React.JSX.Element {
   } = useFarmingState(farmingValidationContext)
 
   const [cardViewMode, setCardViewMode] = useState<'modifiers' | 'recipe'>('modifiers')
+  const [howToOpen, setHowToOpen] = useState(false)
+  const [qrCodeOpen, setQrCodeOpen] = useState(false)
 
   const itemsMap = useMemo(() => (data !== null ? buildItemsMap(data.items) : {}), [data])
   const genericsMap = useMemo(() => (data !== null ? buildGenericsMap(data.generics) : {}), [data])
@@ -198,8 +203,36 @@ export default function App(): React.JSX.Element {
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100">
       <header className="sticky top-0 z-20 border-b border-gray-800 bg-gray-900 px-4 py-3">
-        <h1 className="text-lg font-bold text-gray-100">Icarus Consumables</h1>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h1 className="text-lg font-bold text-gray-100">Icarus Consumables</h1>
+          <nav className="flex items-center gap-4 text-sm">
+            <button
+              type="button"
+              className="text-gray-400 hover:text-gray-100"
+              onClick={() => setHowToOpen(true)}
+            >
+              How to use
+            </button>
+            <button
+              type="button"
+              className="text-gray-400 hover:text-gray-100"
+              onClick={() => setQrCodeOpen(true)}
+            >
+              QR code
+            </button>
+            <a
+              href={ISSUES_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-400 hover:text-gray-100"
+            >
+              Bug reports
+            </a>
+          </nav>
+        </div>
       </header>
+      {howToOpen && <HowToModal onClose={() => setHowToOpen(false)} />}
+      {qrCodeOpen && <QrCodeModal onClose={() => setQrCodeOpen(false)} />}
 
       <div className="sticky top-[3.25rem] z-10 border-b border-gray-800 bg-gray-900">
         <FilterBar

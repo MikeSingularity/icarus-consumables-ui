@@ -1,35 +1,99 @@
-These are excellent constraints, and that Phase 3 "grow ratio" feature is a killer idea. Icarus farming can be a logistical headache, and telling a player exactly how many crop plots of squash and soybeans they need to maintain a specific 3-buff loadout will make your tool incredibly sticky.
+# UX Design — Icarus Consumables UI
 
-Given these requirements—automated updates, complex relational data (items to buffs, and items to farm yields), a second-monitor primary use case, and a future mobile summary—**a responsive Client-Side Single Page Application (SPA) hosted on a free CDN is definitively your best path forward.** Options like Notion or Google Sheets will break down or become unmanageable when you try to automate complex updates or build a clean mobile summary. A Discord bot won't handle the visual density of a farming list well.
+This document captures UX principles, viewport strategy, and design decisions for the Icarus Consumables application.
 
-Here is how we can architect this for zero cost and maximum UX:
+---
 
-### 1. The Zero-Cost Automated Pipeline
+## 1. Purpose and Context
 
-Since you want extraction and updates to be automated, we need to decouple your data extraction from your frontend application.
+The application helps players choose consumables (food and drink) and plan farming and stockpile needs in Icarus. Primary use cases:
 
-* **The Extractor:** You can run your extraction script locally. Setting it up as a simple cron job on your Linux environment to run after typical Icarus patch days (Fridays) is a highly reliable, frictionless way to handle this. The script parses the game files, outputs a structured JSON file, and automatically commits and pushes it to a GitHub repository.
-* **The CI/CD Trigger:** You set up GitHub Actions (which is free) on that repository. Whenever your Linux script pushes a new JSON file, GitHub Actions detects the change, rebuilds your static frontend with the new data, and pushes it to your host.
-* **The Host:** Platforms like Cloudflare Pages, Vercel, or Netlify will host this static build for free. Your users always get the latest data with zero manual intervention from you.
+- **Second monitor / side screen:** Browse items and build a loadout while playing; reference without leaving the game.
+- **Planning:** Compare base stats and buffs, resolve modifier conflicts, and see required crops and non-farmable ingredients.
+- **Sharing:** Stateful URLs allow sharing a loadout and recipe choices; future mobile handoff (e.g. QR) is planned for a summary view.
 
-### 2. Future-Proofing the Data Schema (For Phase 3)
+---
 
-To ensure Phase 3 doesn't require a total rewrite, your automated JSON extraction needs to build a relational graph from day one. You aren't just mapping `Item -> Buff`. You are mapping `Item -> Buffs`, `Item -> Recipe`, and `Recipe Ingredient -> Crop Yield / Growth Time`.
+## 2. Architecture Choice
 
-Even if your Phase 2 UI only displays the single item and its buffs, your underlying data structure should already know that a *Vegetable Pie* requires *Squash*, and *Squash* takes *X minutes* to grow yielding *Y units*. This makes the "grow ratio" calculator a purely frontend logic addition later, rather than a backend rewrite.
+A **client-side SPA hosted on a CDN** was chosen to support:
 
-### 3. UX Design for the Second Monitor
+- Automated data updates (data fetched at runtime from a single JSON source).
+- Complex relational data (items, modifiers, recipes, generics, growth data) without a custom backend.
+- Stateful URLs for sharing and future mobile handoff.
+- Zero ongoing server cost (static hosting).
 
-For a second monitor, horizontal space is usually abundant, but the player's primary focus is still on the main screen.
+---
 
-* **High Contrast & Dark Mode:** Icarus is a visually intense game. A dark mode UI will prevent your tool from acting like a flashbang on their secondary screen.
-* **Data Grids over Lists:** Use a responsive card grid. Let players sort by clicking column headers (Stamina, Health, Mining Yield) so they can visually scan icons and numbers at a glance without reading dense text.
+## 3. Visual and Layout Principles
 
-### 4. Nailing the Mobile Summary (Phase 3)
+### 3.1 Dark Mode First
 
-By building this as an SPA, you are already halfway to a Progressive Web App (PWA).
+- The game is visually intense; a dark UI reduces glare on a second screen and keeps focus on the game.
+- Tailwind dark theme is applied by default (e.g. class on `html`). No light-mode toggle in current scope.
 
-* **Stateful URLs:** When a user builds their 3-item loadout on their second monitor, encode that state into the URL (e.g., `yourtool.com/loadout?items=veg_pie,prime_meat,wine`).
-* **The Handoff:** They can simply copy that URL or scan a generated QR code on their screen with their phone. The mobile view of that same URL detects the viewport size and strips away the complex search grids, displaying only the "Summary Card" and the "Farming Checklist."
+### 3.2 High Contrast and Scannability
 
-Would you like to drill down into the JSON data schema to structure the relationships between the consumables, buffs, and the agricultural yield logic, or would you prefer to discuss which frontend framework (React, Vue, etc.) would make building the visual grid easiest?
+- Text and borders use sufficient contrast against the dark background.
+- Cards and panels use consistent spacing and typography so users can scan tiers, stats, and buff names quickly.
+- Data grids and cards are preferred over long lists; sort and filter allow quick narrowing.
+
+### 3.3 Responsive Layout
+
+- **Desktop:** Main content (filter + card grid) and sidebar (loadout + farming calculator) side by side.
+- **Narrow viewports:** Stack vertically; sidebar below main content. Sticky header and filter bar keep controls accessible.
+- **Future mobile:** Phase 4 will collapse to a summary card and farming checklist when a loadout is active and viewport is small.
+
+---
+
+## 4. Key Flows
+
+### 4.1 Browse and Filter
+
+- Filter bar above the grid: tier slider, sort (tier, category, base stats), talents filter, DLC/feature filter.
+- Filters persist in localStorage so returning users keep their preferences.
+- Empty state: clear message when no items match (e.g. “No items match your filters”).
+
+### 4.2 Loadout Building
+
+- Click a card to add to loadout; click again or use panel control to remove.
+- Modifier conflict: selection is blocked with an explicit message (e.g. “Conflicts with [Item] — same buff active”).
+- Slot limit (1–5) is configurable and enforced.
+- Loadout panel shows aggregated base stats and modifier effects; conflict state is visible if ever shown.
+
+### 4.3 Farming Calculator
+
+- Automatically derives consumption from modifier lifetime or allows manual servings/hour for items without a timed modifier.
+- Recipe, generic, and derived-recipe choices are available in the sidebar; card recipe view can show the same choices when the item is in the loadout.
+- Output is split into crop plots (with plot counts and growth info) and stockpile (units per hour). One level of recipe on the card; full tree and numbers in the calculator.
+
+### 4.4 Sharing and Persistence
+
+- Full loadout and recipe-related state are encoded in the URL (items, slots, recipe overrides, generic selections, derived overrides, servings).
+- Restore from URL on load; invalid or stale keys are dropped so old links do not break the app.
+- `history.replaceState` is used so every toggle does not create a new history entry.
+
+---
+
+## 5. Accessibility and Error Handling
+
+- **Loading:** Dedicated loading state (e.g. spinner) while data is fetched.
+- **Errors:** If fetch fails or data is missing, an error message is shown; no silent failure.
+- **Validation:** URL and persisted state are validated against the current dataset; unknown items or recipe IDs are ignored and not applied.
+- **Labels and structure:** Interactive controls and sections are structured so the UI is navigable and understandable (future work: formal a11y audit and ARIA where needed).
+
+---
+
+## 6. Future UX (Phase 4)
+
+- **Categories:** Drink and Animal Food as optional filters; category badges and grouped grid for multi-category view.
+- **PWA:** Installable app and optional offline support.
+- **Mobile handoff:** QR code for the current URL; mobile view shows only summary card and farming checklist to support on-the-go reference.
+
+---
+
+## 7. References
+
+- Implementation details: `docs/plan.md`, `docs/card-recipe-view-design.md`.
+- Data compensations and edge cases: `docs/ui-data-compensations.md`.
+- Data schema: `docs/minified_item_readme.md`.
