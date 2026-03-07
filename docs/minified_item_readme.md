@@ -20,9 +20,14 @@ Version and build information for the specific data set.
 | Field | Type | Description |
 | :--- | :--- | :--- |
 | `parser_version` | string | Internal version of the Icarus Consumables Parser. |
-| `game_version` | string | Factual game version (from `version.json`). |
-| `build_guid` | string | Steam Dedicated Server build GUID. |
-| `parse_date` | string | Date the data was parsed (YYYY-MM-DD). |
+| `server_build_guid` | string | Steam Dedicated Server build GUID. |
+| `client_build_guid` | string | Steam Primary Game client build GUID. |
+| `server_version` | string | Factual game version from server files. |
+| `client_version` | string | Client-reported game version (synchronized). |
+| `version_title` | string | SteamDB patchnotes title (e.g., "Week 115 Update"). |
+| `latest_week` | string | Integer week number extracted from the title. |
+| `patchnotes_url` | string | URL to the SteamDB patchnotes for this build. |
+| `last_sync_date` | string | Date both versions were successfully synchronized (YYYY-MM-DD). |
 | `generated_date` | string | Date the minified file was finalized. |
 
 ## 3. Items (`items`)

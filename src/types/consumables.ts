@@ -15,9 +15,14 @@ export interface ConsumablesData {
 
 export interface Metadata {
   parser_version: string
-  game_version: string
-  build_guid: string
-  parse_date: string
+  client_version: string
+  /** URL to SteamDB patchnotes for this build. Optional for backward compatibility. */
+  patchnotes_url?: string
+  /** Integer week number from version title. Optional. */
+  latest_week?: string
+  /** Date both versions were successfully synchronized (YYYY-MM-DD). */
+  last_sync_date: string
+  /** Date the minified file was finalized. */
   generated_date: string
 }
 

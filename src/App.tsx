@@ -200,7 +200,14 @@ export default function App(): React.JSX.Element {
   const selectedNames = new Set(selectedItems.map((item) => item.name))
   const blockedModIds = new Set(selectedItems.flatMap((item) => item.modifiers))
 
-  const { game_version, generated_date, parser_version, parse_date } = data.metadata
+  const {
+    client_version,
+    last_sync_date,
+    patchnotes_url,
+    latest_week,
+    parser_version,
+    generated_date,
+  } = data.metadata
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-950 text-gray-100">
@@ -209,7 +216,20 @@ export default function App(): React.JSX.Element {
           <div className="flex flex-wrap items-baseline gap-3">
             <h1 className="text-lg font-bold text-gray-100">Icarus Consumables</h1>
             <span className="text-sm text-gray-400">
-              Icarus Version {game_version} · Generated Date {generated_date}
+              Icarus Version{' '}
+              {patchnotes_url ? (
+                <a
+                  href={patchnotes_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-300 underline hover:text-gray-100"
+                >
+                  {client_version}
+                </a>
+              ) : (
+                client_version
+              )}
+              {latest_week ? ` (Week ${latest_week})` : ''} · Update Date {last_sync_date}
             </span>
           </div>
           <nav className="flex items-center gap-4 text-sm">
@@ -314,7 +334,7 @@ export default function App(): React.JSX.Element {
       </div>
 
       <footer className="mt-auto border-t border-gray-800 bg-gray-900 px-4 py-2 text-center text-xs text-gray-500">
-        Parser {parser_version} · Parsed {parse_date}
+        Parser {parser_version} · Parsed {generated_date}
       </footer>
     </div>
   )
