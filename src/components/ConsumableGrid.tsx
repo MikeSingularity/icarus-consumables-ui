@@ -24,6 +24,7 @@ interface ConsumableGridProps {
 /**
  * Renders the responsive card grid of food consumables.
  * Applies tier filtering, sorting, talent dimming, and feature dimming based on filterState.
+ * Items currently in the loadout are always shown even if they would be filtered out by tier.
  */
 export function ConsumableGrid({
   items,
@@ -45,7 +46,13 @@ export function ConsumableGrid({
   const { tier, sortKey, disabledTalents, disabledFeatures } = filterState
 
   const tierFiltered = items.filter((item) => Math.floor(item.tier.total) <= tier)
-  const sorted = sortItems(tierFiltered, sortKey)
+  const tierFilteredNames = new Set(tierFiltered.map((item) => item.name))
+  const loadoutAdditions = items.filter(
+    (item) => selectedNames.has(item.name) && !tierFilteredNames.has(item.name),
+  )
+  const itemsToShow = [...tierFiltered, ...loadoutAdditions]
+  const sorted = sortItems(itemsToShow, sortKey)
+  const shownOnlyAsLoadout = new Set(loadoutAdditions.map((item) => item.name))
 
   if (sorted.length === 0) {
     return (
@@ -61,7 +68,8 @@ export function ConsumableGrid({
         const dimmed =
           (item.talent_requirement !== undefined &&
             disabledTalents.has(item.talent_requirement)) ||
-          (item.required_features?.some((f) => disabledFeatures.has(f)) ?? false)
+          (item.required_features?.some((f) => disabledFeatures.has(f)) ?? false) ||
+          shownOnlyAsLoadout.has(item.name)
         return (
           <ConsumableCard
             key={item.name}
