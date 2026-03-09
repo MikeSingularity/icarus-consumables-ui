@@ -28,7 +28,7 @@ Version and build information for the specific data set.
 | `latest_week` | string | Integer week number extracted from the title. |
 | `patchnotes_url` | string | URL to the SteamDB patchnotes for this build. |
 | `last_sync_date` | string | Date both versions were successfully synchronized (YYYY-MM-DD). |
-| `generated_date` | string | Date the minified file was finalized. |
+| `generated_date` | string | Date the minified file was finalized (automatically updated). |
 
 ## 3. Items (`items`)
 
@@ -117,6 +117,7 @@ A dictionary of recipes indexed by ID.
 | `display_name` | string | Localized name. |
 | `yields_count` | number | Average quantity produced. |
 | `recipe_produces` | object | (Optional) `{ "name": "IntermediateID", "yields_count": count }` - Only if the direct output differs from the final product (e.g., Cake -> 8 Pieces). |
+| `yields_item` | string | (Optional) Backend internal item ID; may be present when output differs from final product. UI does not rely on this. |
 | `yields_min` | number | (Optional) Minimum quantity. |
 | `yields_max` | number | (Optional) Maximum quantity. |
 
@@ -126,6 +127,7 @@ A dictionary of recipes indexed by ID.
 | `talent` | string | The internal Talent ID required to craft. |
 | `character` | integer | (Optional) Minimum character level. |
 | `required_features` | array | (Optional) Feature IDs required for this recipe. |
+| `session` | (varies) | (Optional) Backend-only; not used by the UI. |
 
 ### 4. Generic Ingredient Groups (`generics`)
 

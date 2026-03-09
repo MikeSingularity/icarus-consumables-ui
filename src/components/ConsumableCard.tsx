@@ -10,7 +10,7 @@ import {
 import { getEffectiveRecipeId, getAvailableRecipeIds } from '@/utils/farmingCalc'
 import { dlcColour } from '@/utils/dlcbadge'
 import { BASE_STAT_DISPLAY_ORDER } from '@/constants/categories'
-import type { Item, Modifier, Recipe, StatMetadataEntry } from '@/types/consumables'
+import type { Item, Modifier, Recipe, StatMetadataEntry, Generic } from '@/types/consumables'
 
 interface ConsumableCardProps {
   item: Item
@@ -35,8 +35,8 @@ interface ConsumableCardProps {
   recipeOverrides: Record<string, string>
   /** Generic id -> selected item name. */
   genericSelections: Record<string, string>
-  /** Generic id -> list of valid item names. */
-  genericsMap: Record<string, string[]>
+  /** Generic id -> Generic object. */
+  genericsMap: Record<string, Generic>
   onSetRecipe: (itemName: string, recipeId: string) => void
   onSetGeneric: (genericId: string, itemName: string) => void
 }
@@ -185,7 +185,8 @@ export function ConsumableCard({
                   <ul className="space-y-1">
                     {effectiveRecipe.inputs.map((input) => {
                       if (input.is_generic) {
-                        const options = genericsMap[input.name] ?? []
+                        const generic = genericsMap[input.name]
+                        const options = generic?.items ?? []
                         const selectedName = genericSelections[input.name] ?? options[0]
                         const displayValue = selectedName
                           ? itemsMap[selectedName]?.display_name ?? selectedName.replace(/_/g, ' ')
@@ -195,7 +196,7 @@ export function ConsumableCard({
                             <span className="text-gray-400">
                               {input.display_name} {input.count}
                             </span>
-                            {isInLoadout && options.length > 1 ? (
+                            {isInLoadout && options.length > 1 && !generic?.is_leaf ? (
                               <select
                                 value={selectedName ?? ''}
                                 onChange={(e) => onSetGeneric(input.name, e.target.value)}
@@ -210,7 +211,9 @@ export function ConsumableCard({
                                 ))}
                               </select>
                             ) : (
-                              <span className="text-gray-200">({displayValue})</span>
+                              <span className="text-gray-200">
+                                {generic?.is_leaf ? '' : `(${displayValue})`}
+                              </span>
                             )}
                           </li>
                         )

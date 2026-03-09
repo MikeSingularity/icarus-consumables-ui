@@ -1,7 +1,4 @@
-/**
- * Canonical URL state builder and parser for loadout + farming params.
- * Single source of truth for the shareable query string (replaceState and future QR).
- */
+import type { Generic } from '@/types/consumables'
 
 /** Params required to build the full search string. */
 export interface CanonicalUrlParams {
@@ -188,8 +185,8 @@ export function parseFarmingParamsFromUrl(
 export interface FarmingValidationContext {
   recipeIds: Set<string>
   genericIds: Set<string>
-  /** genericId -> list of valid item names for that generic. */
-  genericIdToItems: Record<string, string[]>
+  /** genericId -> Generic object. */
+  genericIdToItems: Record<string, Generic>
 }
 
 /**
@@ -208,7 +205,7 @@ export function validateFarmingParams(
   const genericSelections: Record<string, string> = {}
   for (const [genericId, itemName] of Object.entries(parsed.genericSelections)) {
     if (!context.genericIds.has(genericId)) continue
-    const validItems = context.genericIdToItems[genericId]
+    const validItems = context.genericIdToItems[genericId]?.items
     if (validItems?.includes(itemName)) genericSelections[genericId] = itemName
   }
 

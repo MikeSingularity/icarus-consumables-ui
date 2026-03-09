@@ -68,8 +68,8 @@ export interface FarmingParams {
   recipes: Record<string, Recipe>
   /** Full modifiers dict from data. */
   modifiers: Record<string, Modifier>
-  /** Generic tag ID → list of valid item names. */
-  genericsMap: Record<string, string[]>
+  /** Generic tag ID → Generic object. */
+  genericsMap: Record<string, Generic>
   /**
    * Player-configured servings/hour for items with no timed modifier.
    * Falls back to 1 for items not present in this map.
@@ -101,8 +101,8 @@ export interface FarmingParams {
  * Converts the generics array (from data.generics) into a lookup dict
  * keyed by generic tag ID.
  */
-export function buildGenericsMap(generics: Generic[]): Record<string, string[]> {
-  return Object.fromEntries(generics.map((g) => [g.id, g.items]))
+export function buildGenericsMap(generics: Generic[]): Record<string, Generic> {
+  return Object.fromEntries(generics.map((g) => [g.id, g]))
 }
 
 /**
@@ -238,20 +238,36 @@ function walkIngredients(
   if (recipe === undefined) return
 
   for (const input of recipe.inputs) {
+    const unitsPerHour = craftsPerHour * input.count
     let ingredientName = input.name
     let ingredientDisplayName = input.display_name
 
     if (input.is_generic) {
-      const options = params.genericsMap[input.name] ?? []
+      const generic = params.genericsMap[input.name]
+      const options = generic?.items ?? []
       const selected = params.genericSelections[input.name] ?? options[0]
 
-      // Record this generic for the UI to show a selector
-      if (!collectedGenerics.has(input.name) && options.length > 0) {
+      // Record this generic for the UI to show a selector, unless it's a leaf
+      if (!collectedGenerics.has(input.name) && options.length > 0 && !generic?.is_leaf) {
         collectedGenerics.set(input.name, {
           genericId: input.name,
-          displayName: input.name.replace(/_/g, ' '),
+          displayName: generic?.display_name ?? input.name.replace(/_/g, ' '),
           options,
         })
+      }
+
+      // If the generic is marked as a leaf, stop recursion and add to stockpile
+      if (generic?.is_leaf) {
+        const existing = stockpileAcc.get(input.name)
+        if (existing !== undefined) {
+          existing.unitsPerHour += unitsPerHour
+        } else {
+          stockpileAcc.set(input.name, {
+            display_name: generic.display_name,
+            unitsPerHour,
+          })
+        }
+        continue
       }
 
       if (selected === undefined) continue
@@ -260,7 +276,6 @@ function walkIngredients(
       ingredientDisplayName = item?.display_name ?? selected
     }
 
-    const unitsPerHour = craftsPerHour * input.count
     const ingredientItem = params.itemsMap[ingredientName]
 
     // Recurse if this ingredient has a crafting sub-recipe.

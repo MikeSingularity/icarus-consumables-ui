@@ -1,6 +1,6 @@
 import { ConsumableCard } from './ConsumableCard'
 import { sortItems } from '@/utils/sortItems'
-import type { Item, Modifier, Recipe, StatMetadataEntry } from '@/types/consumables'
+import type { Item, Modifier, Recipe, StatMetadataEntry, Generic } from '@/types/consumables'
 import type { FilterState } from '@/hooks/useFilterState'
 
 interface ConsumableGridProps {
@@ -16,7 +16,7 @@ interface ConsumableGridProps {
   itemsMap: Record<string, Item>
   recipeOverrides: Record<string, string>
   genericSelections: Record<string, string>
-  genericsMap: Record<string, string[]>
+  genericsMap: Record<string, Generic>
   onSetRecipe: (itemName: string, recipeId: string) => void
   onSetGeneric: (genericId: string, itemName: string) => void
 }

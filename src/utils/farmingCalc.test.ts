@@ -102,12 +102,12 @@ const defaultParams = (
 describe('buildGenericsMap', () => {
   it('converts generics array to id-keyed dict', () => {
     const generics: Generic[] = [
-      { id: 'Any_Vegetable', items: ['Potato', 'Carrot'] },
-      { id: 'Any_Meat', items: ['Raw_Meat', 'Fish'] },
+      { id: 'Any_Vegetable', display_name: 'Vegetable', items: ['Potato', 'Carrot'] },
+      { id: 'Any_Meat', display_name: 'Meat', items: ['Raw_Meat', 'Fish'] },
     ]
     const map = buildGenericsMap(generics)
-    expect(map['Any_Vegetable']).toEqual(['Potato', 'Carrot'])
-    expect(map['Any_Meat']).toEqual(['Raw_Meat', 'Fish'])
+    expect(map['Any_Vegetable']).toEqual(generics[0])
+    expect(map['Any_Meat']).toEqual(generics[1])
   })
 })
 
@@ -384,7 +384,9 @@ describe('computeFarmingResult', () => {
       itemsMap: buildItemsMap([...allItems, carrot, genericFood]),
       recipes: { ...allRecipes, recipe_generic: genericRecipe },
       modifiers: allModifiers,
-      genericsMap: { Any_Vegetable: ['Carrot', 'Wheat'] },
+      genericsMap: {
+        Any_Vegetable: { id: 'Any_Vegetable', display_name: 'Veggie', items: ['Carrot', 'Wheat'] },
+      },
       servingsOverrides: {},
       recipeOverrides: {},
       genericSelections: {},
@@ -411,7 +413,9 @@ describe('computeFarmingResult', () => {
       itemsMap: buildItemsMap([...allItems, carrot, genericFood]),
       recipes: { ...allRecipes, recipe_generic: genericRecipe },
       modifiers: allModifiers,
-      genericsMap: { Any_Vegetable: ['Carrot', 'Wheat'] },
+      genericsMap: {
+        Any_Vegetable: { id: 'Any_Vegetable', display_name: 'Veggie', items: ['Carrot', 'Wheat'] },
+      },
       servingsOverrides: {},
       recipeOverrides: {},
       genericSelections: { Any_Vegetable: 'Wheat' },
@@ -419,6 +423,50 @@ describe('computeFarmingResult', () => {
     const result = computeFarmingResult(params)
     expect(result.cropPlots).toHaveLength(1)
     expect(result.cropPlots[0].name).toBe('Wheat')
+  })
+
+  it('stops recursion for generic items marked as is_leaf', () => {
+    // Steamed Fish pattern: Any_Raw_Fish is a leaf generic.
+    // Even if its resolved items have recipes (like butchering), it should stop at the generic's display name.
+    const fishRecipe = makeRecipe(
+      'recipe_fish',
+      [{ name: 'Any_Raw_Fish', count: 1, is_generic: true }],
+      'Steamed_Fish',
+    )
+    const steamedFish = makeItem('Steamed_Fish', ['bread_mod'], ['recipe_fish'])
+    
+    // fish01 exists and has a recipe, but is_leaf should prevent recursing into it
+    const fish01 = makeItem('fish01', [], ['recipe_butcher'])
+    const recipeButcher = makeRecipe('recipe_butcher', [{ name: 'carcass', count: 1 }], 'fish01')
+
+    const params: FarmingParams = {
+      loadoutItems: [steamedFish],
+      itemsMap: buildItemsMap([steamedFish, fish01]),
+      recipes: { recipe_fish: fishRecipe, recipe_butcher: recipeButcher },
+      modifiers: allModifiers,
+      genericsMap: {
+        Any_Raw_Fish: { 
+          id: 'Any_Raw_Fish', 
+          display_name: 'Raw Fish', 
+          items: ['fish01'], 
+          is_leaf: true 
+        },
+      },
+      servingsOverrides: {},
+      recipeOverrides: {},
+      genericSelections: {},
+    }
+
+    const result = computeFarmingResult(params)
+    
+    // Should NOT have crop plots from sub-ingredients
+    expect(result.cropPlots).toHaveLength(0)
+    // Should have "Any_Raw_Fish" in stockpile with display_name "Raw Fish"
+    expect(result.stockpile).toHaveLength(1)
+    expect(result.stockpile[0].name).toBe('Any_Raw_Fish')
+    expect(result.stockpile[0].display_name).toBe('Raw Fish')
+    // 2/hr (bread_mod) * 1 count = 2 units/hr
+    expect(result.stockpile[0].unitsPerHour).toBeCloseTo(2)
   })
 
   it('handles source_item pieces with fallback to parent recipe (piece has no own recipe)', () => {

@@ -108,6 +108,8 @@ export interface RecipeRequirements {
   talent?: string
   character?: number
   required_features?: string[]
+  /** Backend-only; not used by UI. */
+  session?: unknown
 }
 
 export interface RecipeInput {
@@ -122,12 +124,21 @@ export interface RecipeOutput {
   display_name: string
   yields_count: number
   recipe_produces?: { name: string; yields_count: number }
+  /** Backend internal item ID; optional, not used by UI. */
+  yields_item?: string | null
   yields_min?: number
   yields_max?: number
 }
 
 export interface Generic {
   id: string
+  /** Localized display name for the generic category. */
+  display_name: string
+  /**
+   * If true, the generic is treated as a base ingredient (stockpile leaf).
+   * Selection can still happen, but recursion stops and the generic's display_name is used.
+   */
+  is_leaf?: boolean
   items: string[]
 }
 

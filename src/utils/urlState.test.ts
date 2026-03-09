@@ -177,13 +177,15 @@ describe('parseFarmingParamsFromUrl', () => {
 
 })
 
+import type { Generic } from '@/types/consumables'
+
 describe('validateFarmingParams', () => {
   const context = {
     recipeIds: new Set(['Recipe_A', 'Recipe_B']),
     genericIds: new Set(['Sugar', 'Salt']),
     genericIdToItems: {
-      Sugar: ['honey', 'sugarcane'],
-      Salt: ['sea_salt', 'rock_salt'],
+      Sugar: { id: 'Sugar', display_name: 'Sugar', items: ['honey', 'sugarcane'] } as Generic,
+      Salt: { id: 'Salt', display_name: 'Salt', items: ['sea_salt', 'rock_salt'] } as Generic,
     },
   }
 
