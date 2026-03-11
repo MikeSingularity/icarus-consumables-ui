@@ -12,6 +12,7 @@ The JSON object contains:
 - `features`: Mapping of feature IDs (DLCs/Updates) to their display names.
 - `modifiers`: Detailed effects for food/drink buffs.
 - `stats`: Mappings for internal stat codes to readable names and categories.
+- `requirements`: Global registry mapping requirement IDs (talents, blueprints, workshop) to display names.
 
 ## 2. Metadata (`metadata`)
 
@@ -47,8 +48,7 @@ An array of consumable items.
 | `recipes` | array | List of recipe IDs that produce this item. |
 | `source_ids` | object | (Optional) Internal IDs from game data tables (e.g., `D_Consumable`). |
 | `source_item` | string | (Optional) The raw item/carcass this is derived from. |
-| `talent_requirement`| string | (Optional) Talent ID required to unlock. |
-| `required_features` | array | (Optional) Feature IDs required for this item. |
+| `requirements` | object | (Optional) Unlock prerequisites (see [Requirement Fields](#requirement-fields)). |
 | `traits` | object | (Optional) Booleans for item properties (see [Item Traits](#item-traits)). |
 | `growth_data` | object | (Optional) Farming info if applicable. |
 
@@ -124,9 +124,13 @@ A dictionary of recipes indexed by ID.
 #### Requirement Fields
 | Field | Type | Description |
 | :--- | :--- | :--- |
-| `talent` | string | The internal Talent ID required to craft. |
+| `talent` | string | (Optional) Internal ID in the [Requirement Registry](#8-requirement-registry-requirements). |
+| `blueprint` | string | (Optional) Internal ID in the [Requirement Registry](#8-requirement-registry-requirements). |
+| `workshop` | string | (Optional) Internal ID in the [Requirement Registry](#8-requirement-registry-requirements). |
+| `tier` | integer | (Optional) Tech tier requirement (usually 1-4). |
+| `energy` | number | (Optional) Millijoules required to craft (recipes only). |
+| `features` | array | (Optional) Feature IDs (DLC/Updates) required. |
 | `character` | integer | (Optional) Minimum character level. |
-| `required_features` | array | (Optional) Feature IDs required for this recipe. |
 | `session` | (varies) | (Optional) Backend-only; not used by the UI. |
 
 ### 4. Generic Ingredient Groups (`generics`)
@@ -165,3 +169,13 @@ A dictionary mapping internal feature IDs to their public-facing display names.
 | `Homestead` | `Homestead` |
 
 **Note on Remapping**: Some technical feature levels (like `Galileo` or `Laika`) are remapped to `Core` if they are now part of the base game. These will not appear as tags in the output.
+
+## 8. Requirement Registry (`requirements`)
+
+Global mapping for any key referenced in an item or recipe's `requirements` block that needs a human-readable display name.
+
+| Key (ID) | Value (Display Name) |
+| :--- | :--- |
+| `Honeycomb_Products` | `Honeycomb Products` |
+| `Meta_Chicken` | `Meta Chicken` |
+| `Wine` | `Wine` |

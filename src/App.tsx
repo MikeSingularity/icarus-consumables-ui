@@ -31,9 +31,10 @@ export default function App(): React.JSX.Element {
     setTier,
     setSortKey,
     toggleTalent,
-    enableAllTalents,
     toggleFeature,
-    enableAllFeatures,
+    toggleBlueprint,
+    toggleWorkshop,
+    enableAllRequirements,
   } = useFilterState()
 
   // Memoized so the array reference is stable across re-renders.
@@ -177,18 +178,32 @@ export default function App(): React.JSX.Element {
 
   const talents = [
     ...new Set(
-      items.map((item) => item.talent_requirement).filter((t): t is string => t !== undefined),
+      items.map((item) => item.requirements?.talent).filter((t): t is string => t !== undefined),
     ),
   ].sort()
 
-  // Build a display-name dict for DLC features.
-  // Prefer the top-level features dict when present; otherwise fall back to raw IDs from items.
+  const blueprints = [
+    ...new Set(
+      items.map((item) => item.requirements?.blueprint).filter((b): b is string => b !== undefined),
+    ),
+  ].sort()
+
+  // Feature IDs that appear on at least one consumable (only these are shown in the filter).
+  const featuresFromConsumables = [
+    ...new Set(items.flatMap((item) => item.requirements?.features ?? [])),
+  ].sort()
+
+  // Build a display-name dict for DLC features. Prefer the top-level features dict when present.
   const featureNames: Record<string, string> =
     data.features != null && Object.keys(data.features).length > 0
       ? data.features
-      : Object.fromEntries(
-          [...new Set(items.flatMap((item) => item.required_features ?? []))].map((f) => [f, f]),
-        )
+      : Object.fromEntries(featuresFromConsumables.map((f) => [f, f]))
+
+  const features = featuresFromConsumables
+
+  const hasWorkshopItems = items.some((item) => item.requirements?.workshop !== undefined)
+
+  const requirementsRegistry = data.requirements ?? {}
 
   const sortOptions = buildSortOptions(items, data.stats)
 
@@ -269,13 +284,20 @@ export default function App(): React.JSX.Element {
           onSortChange={setSortKey}
           sortOptions={sortOptions}
           talents={talents}
-          disabledTalents={filterState.disabledTalents}
-          onToggleTalent={toggleTalent}
-          onEnableAllTalents={enableAllTalents}
+          features={features}
+          blueprints={blueprints}
+          requirementsRegistry={requirementsRegistry}
           featureNames={featureNames}
+          disabledTalents={filterState.disabledTalents}
           disabledFeatures={filterState.disabledFeatures}
+          disabledBlueprints={filterState.disabledBlueprints}
+          workshopDisabled={filterState.workshopDisabled}
+          hasWorkshopItems={hasWorkshopItems}
+          onToggleTalent={toggleTalent}
           onToggleFeature={toggleFeature}
-          onEnableAllFeatures={enableAllFeatures}
+          onToggleBlueprint={toggleBlueprint}
+          onToggleWorkshop={toggleWorkshop}
+          onEnableAllRequirements={enableAllRequirements}
           cardViewMode={cardViewMode}
           onCardViewModeChange={setCardViewMode}
         />

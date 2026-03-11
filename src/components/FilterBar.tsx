@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import { TalentModal } from './TalentModal'
-import { FeatureModal } from './FeatureModal'
+import { FilterModal } from './FilterModal'
 import type { SortOption } from '@/types/ui'
 
 interface FilterBarProps {
@@ -10,20 +9,30 @@ interface FilterBarProps {
   onSortChange: (key: string) => void
   sortOptions: SortOption[]
   talents: string[]
-  disabledTalents: Set<string>
-  onToggleTalent: (talent: string) => void
-  onEnableAllTalents: () => void
+  features: string[]
+  blueprints: string[]
+  requirementsRegistry: Record<string, string>
   featureNames: Record<string, string>
+  disabledTalents: Set<string>
   disabledFeatures: Set<string>
+  disabledBlueprints: Set<string>
+  /** When true, items with any workshop requirement are dimmed. */
+  workshopDisabled: boolean
+  /** True if any item has a workshop requirement. */
+  hasWorkshopItems: boolean
+  onToggleTalent: (talent: string) => void
   onToggleFeature: (feature: string) => void
-  onEnableAllFeatures: () => void
+  onToggleBlueprint: (blueprint: string) => void
+  onToggleWorkshop: () => void
+  onEnableAllRequirements: () => void
   cardViewMode: 'modifiers' | 'recipe'
   onCardViewModeChange: (mode: 'modifiers' | 'recipe') => void
 }
 
 /**
  * Filter and sort controls rendered above the consumables grid.
- * Contains the tier range slider, sort dropdown, talent filter, and feature filter modal triggers.
+ * Contains the tier slider, sort dropdown, and a single Filter button that opens
+ * the combined requirements modal (talents, DLC, blueprints).
  */
 export function FilterBar({
   tier,
@@ -32,18 +41,32 @@ export function FilterBar({
   onSortChange,
   sortOptions,
   talents,
-  disabledTalents,
-  onToggleTalent,
-  onEnableAllTalents,
+  features,
+  blueprints,
+  requirementsRegistry,
   featureNames,
+  disabledTalents,
   disabledFeatures,
+  disabledBlueprints,
+  workshopDisabled,
+  hasWorkshopItems,
+  onToggleTalent,
   onToggleFeature,
-  onEnableAllFeatures,
+  onToggleBlueprint,
+  onToggleWorkshop,
+  onEnableAllRequirements,
   cardViewMode,
   onCardViewModeChange,
 }: FilterBarProps): React.JSX.Element {
-  const [talentModalOpen, setTalentModalOpen] = useState(false)
-  const [featureModalOpen, setFeatureModalOpen] = useState(false)
+  const [filterModalOpen, setFilterModalOpen] = useState(false)
+
+  const disabledCount =
+    disabledTalents.size +
+    disabledFeatures.size +
+    disabledBlueprints.size +
+    (workshopDisabled ? 1 : 0)
+  const showFilterButton =
+    talents.length > 0 || features.length > 0 || blueprints.length > 0 || hasWorkshopItems
 
   return (
     <>
@@ -105,31 +128,16 @@ export function FilterBar({
             </select>
           </label>
 
-          {/* Talents button */}
-          {talents.length > 0 && (
+          {/* Single Filter button (talents + DLC + blueprints + workshop) */}
+          {showFilterButton && (
             <button
-              onClick={() => setTalentModalOpen(true)}
+              onClick={() => setFilterModalOpen(true)}
               className="rounded border border-gray-700 bg-gray-800 px-3 py-1 text-sm text-gray-300 hover:border-gray-500 hover:text-gray-100"
             >
-              Talents
-              {disabledTalents.size > 0 && (
+              Filter
+              {disabledCount > 0 && (
                 <span className="ml-1.5 rounded bg-blue-600 px-1.5 py-0.5 text-xs text-white">
-                  {disabledTalents.size}
-                </span>
-              )}
-            </button>
-          )}
-
-          {/* Features button */}
-          {Object.keys(featureNames).length > 0 && (
-            <button
-              onClick={() => setFeatureModalOpen(true)}
-              className="rounded border border-gray-700 bg-gray-800 px-3 py-1 text-sm text-gray-300 hover:border-gray-500 hover:text-gray-100"
-            >
-              DLC
-              {disabledFeatures.size > 0 && (
-                <span className="ml-1.5 rounded bg-amber-600 px-1.5 py-0.5 text-xs text-white">
-                  {disabledFeatures.size}
+                  {disabledCount}
                 </span>
               )}
             </button>
@@ -137,23 +145,24 @@ export function FilterBar({
         </div>
       </div>
 
-      {talentModalOpen && (
-        <TalentModal
+      {filterModalOpen && (
+        <FilterModal
           talents={talents}
-          disabledTalents={disabledTalents}
-          onToggle={onToggleTalent}
-          onEnableAll={onEnableAllTalents}
-          onClose={() => setTalentModalOpen(false)}
-        />
-      )}
-
-      {featureModalOpen && (
-        <FeatureModal
+          features={features}
+          blueprints={blueprints}
+          hasWorkshopItems={hasWorkshopItems}
+          requirementsRegistry={requirementsRegistry}
           featureNames={featureNames}
+          disabledTalents={disabledTalents}
           disabledFeatures={disabledFeatures}
-          onToggle={onToggleFeature}
-          onEnableAll={onEnableAllFeatures}
-          onClose={() => setFeatureModalOpen(false)}
+          disabledBlueprints={disabledBlueprints}
+          workshopDisabled={workshopDisabled}
+          onToggleTalent={onToggleTalent}
+          onToggleFeature={onToggleFeature}
+          onToggleBlueprint={onToggleBlueprint}
+          onToggleWorkshop={onToggleWorkshop}
+          onEnableAllRequirements={onEnableAllRequirements}
+          onClose={() => setFilterModalOpen(false)}
         />
       )}
     </>

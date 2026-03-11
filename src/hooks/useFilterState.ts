@@ -5,14 +5,18 @@ import { LS_KEYS } from '@/constants/categories'
  * The active filter and sort state for the food browser.
  */
 export interface FilterState {
-  /** Maximum tier to show; items with tier.total > tier are hidden. */
+  /** Maximum tier to show; items with effective tier > tier are hidden. */
   tier: number
   /** Active sort key string understood by sortItems(). */
   sortKey: string
-  /** Set of talent_requirement values whose items should be dimmed. */
+  /** Set of talent requirement IDs whose items should be dimmed. */
   disabledTalents: Set<string>
-  /** Set of feature values whose items should be dimmed. */
+  /** Set of feature IDs whose items should be dimmed. */
   disabledFeatures: Set<string>
+  /** Set of blueprint requirement IDs whose items should be dimmed. */
+  disabledBlueprints: Set<string>
+  /** When true, items with any workshop requirement (e.g. Orbital Workshop) are dimmed. */
+  workshopDisabled: boolean
 }
 
 /**
@@ -33,7 +37,7 @@ function parseSet(v: string): Set<string> {
 }
 
 /**
- * Manages tier, sort, talent, and feature filter state with localStorage persistence.
+ * Manages tier, sort, talent, feature, and blueprint filter state with localStorage persistence.
  * All state is initialized from localStorage on first render.
  */
 export function useFilterState(): {
@@ -44,6 +48,11 @@ export function useFilterState(): {
   enableAllTalents: () => void
   toggleFeature: (feature: string) => void
   enableAllFeatures: () => void
+  toggleBlueprint: (blueprint: string) => void
+  enableAllBlueprints: () => void
+  workshopDisabled: boolean
+  toggleWorkshop: () => void
+  enableAllRequirements: () => void
 } {
   const [tier, setTierState] = useState<number>(() =>
     readLs(LS_KEYS.TIER, 4, (v) => {
@@ -62,6 +71,14 @@ export function useFilterState(): {
 
   const [disabledFeatures, setDisabledFeatures] = useState<Set<string>>(() =>
     readLs(LS_KEYS.DISABLED_FEATURES, new Set<string>(), parseSet),
+  )
+
+  const [disabledBlueprints, setDisabledBlueprints] = useState<Set<string>>(() =>
+    readLs(LS_KEYS.DISABLED_BLUEPRINTS, new Set<string>(), parseSet),
+  )
+
+  const [workshopDisabled, setWorkshopDisabled] = useState<boolean>(() =>
+    readLs(LS_KEYS.WORKSHOP_DISABLED, false, (v) => v === 'true'),
   )
 
   const setTier = useCallback((t: number) => {
@@ -110,13 +127,55 @@ export function useFilterState(): {
     localStorage.setItem(LS_KEYS.DISABLED_FEATURES, JSON.stringify([]))
   }, [])
 
+  const toggleBlueprint = useCallback((blueprint: string) => {
+    setDisabledBlueprints((prev) => {
+      const next = new Set(prev)
+      if (next.has(blueprint)) {
+        next.delete(blueprint)
+      } else {
+        next.add(blueprint)
+      }
+      localStorage.setItem(LS_KEYS.DISABLED_BLUEPRINTS, JSON.stringify([...next]))
+      return next
+    })
+  }, [])
+
+  const enableAllBlueprints = useCallback(() => {
+    setDisabledBlueprints(new Set())
+    localStorage.setItem(LS_KEYS.DISABLED_BLUEPRINTS, JSON.stringify([]))
+  }, [])
+
+  const toggleWorkshop = useCallback(() => {
+    setWorkshopDisabled((prev) => {
+      const next = !prev
+      localStorage.setItem(LS_KEYS.WORKSHOP_DISABLED, String(next))
+      return next
+    })
+  }, [])
+
+  const enableAllRequirements = useCallback(() => {
+    setDisabledTalents(new Set())
+    setDisabledFeatures(new Set())
+    setDisabledBlueprints(new Set())
+    setWorkshopDisabled(false)
+    localStorage.setItem(LS_KEYS.DISABLED_TALENTS, JSON.stringify([]))
+    localStorage.setItem(LS_KEYS.DISABLED_FEATURES, JSON.stringify([]))
+    localStorage.setItem(LS_KEYS.DISABLED_BLUEPRINTS, JSON.stringify([]))
+    localStorage.setItem(LS_KEYS.WORKSHOP_DISABLED, 'false')
+  }, [])
+
   return {
-    filterState: { tier, sortKey, disabledTalents, disabledFeatures },
+    filterState: { tier, sortKey, disabledTalents, disabledFeatures, disabledBlueprints, workshopDisabled },
     setTier,
     setSortKey,
     toggleTalent,
     enableAllTalents,
     toggleFeature,
     enableAllFeatures,
+    toggleBlueprint,
+    enableAllBlueprints,
+    workshopDisabled,
+    toggleWorkshop,
+    enableAllRequirements,
   }
 }

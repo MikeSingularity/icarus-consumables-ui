@@ -61,11 +61,11 @@ const featureNames: Record<string, string> =
   data.features != null && Object.keys(data.features).length > 0
     ? data.features
     : Object.fromEntries(
-        [...new Set(items.flatMap((item) => item.required_features ?? []))].map((f) => [f, f]),
+        [...new Set(items.flatMap((item) => item.requirements?.features ?? []))].map((f) => [f, f]),
       )
 ```
 
-If `data.features` is null or empty, it falls back to the set of feature IDs from `item.required_features` across all items and uses the raw ID as the display name (e.g. `"Styx"` instead of `"Styx Expansion"`). The DLC filter still works, but users see internal IDs.
+If `data.features` is null or empty, it falls back to the set of feature IDs from `item.requirements?.features` across all items and uses the raw ID as the display name (e.g. `"Styx"` instead of `"Styx Expansion"`). The DLC filter still works, but users see internal IDs.
 
 ### Data fix
 

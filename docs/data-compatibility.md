@@ -1,6 +1,6 @@
 # Data compatibility (minified JSON)
 
-When the backend structure of `icarus_consumables.min.json` changes, this doc records what was checked and what the UI tolerates. Schema and types: `docs/minified_item_readme.md`, `src/types/consumables.ts`.
+When the backend structure of `icarus_consumables.min.json` changes, this doc records what was checked and what the UI tolerates. Schema and types: `docs/minified_README.md`, `src/types/consumables.ts`.
 
 ## UI expectations (required)
 
@@ -12,7 +12,8 @@ The app requires these top-level keys and uses them as follows:
 - **generics** – Array (may be empty).
 - **modifiers** – Record of modifier ID to `{ id, display_name, lifetime, stats }`.
 - **stats** – Record of stat key to `{ display_name, unit?, categories }`.
-- **features** – Optional. If present and non-empty, used for DLC display names; otherwise derived from item `required_features`.
+- **features** – Optional. If present and non-empty, used for DLC display names; otherwise derived from item `requirements.features`.
+- **requirements** – Optional. Global registry mapping requirement IDs (talent, blueprint, workshop) to display names; used for talent filter labels and item/recipe requirement resolution.
 
 ## Tolerated extra fields
 

@@ -1,6 +1,6 @@
 /**
  * Type definitions for icarus_consumables.min.json.
- * See docs/minified_item_readme.md for the full schema.
+ * See docs/minified_README.md for the full schema.
  */
 
 export interface ConsumablesData {
@@ -11,6 +11,7 @@ export interface ConsumablesData {
   modifiers: Record<string, Modifier>
   stats: Record<string, StatMetadataEntry>
   features?: Record<string, string>
+  requirements?: Record<string, string>
 }
 
 export interface Metadata {
@@ -48,15 +49,30 @@ export interface Item {
   recipes: string[]
   source_ids?: Record<string, string>
   source_item?: string
-  talent_requirement?: string
-  required_features?: string[]
+  requirements?: Requirements
   traits?: ItemTraits
   growth_data?: { growth_time: number; harvest_min: number; harvest_max: number }
 }
 
 /**
+ * Unlock prerequisites shared by items and recipes.
+ * Keys like talent, blueprint, and workshop are internal IDs that resolve
+ * via the top-level requirements registry to human-readable display names.
+ */
+export interface Requirements {
+  talent?: string
+  blueprint?: string
+  workshop?: string
+  tier?: number
+  features?: string[]
+  character?: number
+  /** Backend-only; not used by UI. */
+  session?: unknown
+}
+
+/**
  * Item traits (boolean flags) from the minified data.
- * See docs/minified_item_readme.md § Item Traits.
+ * See docs/minified_README.md § Item Traits.
  */
 export interface ItemTraits {
   is_berry?: boolean
@@ -81,7 +97,6 @@ export interface ItemTraits {
   is_inedible?: boolean
   is_ingredient?: boolean
   is_override?: boolean
-  is_orbital?: boolean
   is_pumpkin?: boolean
   is_raw?: boolean
   is_raw_prime?: boolean
@@ -101,15 +116,7 @@ export interface Recipe {
   alternate_inputs?: RecipeInput[] | RecipeInput[][]
   outputs: RecipeOutput[]
   benches: string[]
-  requirements: RecipeRequirements
-}
-
-export interface RecipeRequirements {
-  talent?: string
-  character?: number
-  required_features?: string[]
-  /** Backend-only; not used by UI. */
-  session?: unknown
+  requirements: Requirements
 }
 
 export interface RecipeInput {

@@ -1,5 +1,6 @@
 import { ConsumableCard } from './ConsumableCard'
 import { sortItems } from '@/utils/sortItems'
+import { getEffectiveTier } from '@/utils/requirements'
 import type { Item, Modifier, Recipe, StatMetadataEntry, Generic } from '@/types/consumables'
 import type { FilterState } from '@/hooks/useFilterState'
 
@@ -43,9 +44,10 @@ export function ConsumableGrid({
   onSetRecipe,
   onSetGeneric,
 }: ConsumableGridProps): React.JSX.Element {
-  const { tier, sortKey, disabledTalents, disabledFeatures } = filterState
+  const { tier, sortKey, disabledTalents, disabledFeatures, disabledBlueprints, workshopDisabled } =
+    filterState
 
-  const tierFiltered = items.filter((item) => Math.floor(item.tier.total) <= tier)
+  const tierFiltered = items.filter((item) => getEffectiveTier(item) <= tier)
   const tierFilteredNames = new Set(tierFiltered.map((item) => item.name))
   const loadoutAdditions = items.filter(
     (item) => selectedNames.has(item.name) && !tierFilteredNames.has(item.name),
@@ -65,11 +67,14 @@ export function ConsumableGrid({
   return (
     <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {sorted.map((item) => {
-        const dimmed =
-          (item.talent_requirement !== undefined &&
-            disabledTalents.has(item.talent_requirement)) ||
-          (item.required_features?.some((f) => disabledFeatures.has(f)) ?? false) ||
-          shownOnlyAsLoadout.has(item.name)
+        const filterDimmed =
+          (item.requirements?.talent !== undefined &&
+            disabledTalents.has(item.requirements.talent)) ||
+          (item.requirements?.features?.some((f) => disabledFeatures.has(f)) ?? false) ||
+          (item.requirements?.blueprint !== undefined &&
+            disabledBlueprints.has(item.requirements.blueprint)) ||
+          (item.requirements?.workshop !== undefined && workshopDisabled)
+        const dimmed = filterDimmed || shownOnlyAsLoadout.has(item.name)
         return (
           <ConsumableCard
             key={item.name}
@@ -78,6 +83,7 @@ export function ConsumableGrid({
             recipes={recipes}
             statMetadata={statMetadata}
             dimmed={dimmed}
+            selectionDisabled={filterDimmed}
             selected={selectedNames.has(item.name)}
             conflicted={
               !selectedNames.has(item.name) &&

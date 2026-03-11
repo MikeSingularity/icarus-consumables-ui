@@ -2,6 +2,7 @@ import type { Item, StatMetadataEntry } from '@/types/consumables'
 import type { SortOption } from '@/types/ui'
 import { BASE_STAT_DISPLAY_ORDER, MODIFIER_SORT_CATEGORIES } from '@/constants/categories'
 import { formatBaseStatLabel } from '@/utils/formatters'
+import { getEffectiveTier } from '@/utils/requirements'
 
 /**
  * Sort key prefix for base_stat sorts (e.g. "base:BaseFoodRecovery_+").
@@ -44,24 +45,27 @@ export function buildSortOptions(
 
 /**
  * Sorts a copy of the items array according to the given sort key.
+ * Tier comparisons use effective tier (max of item tier and requirements.tier).
  *
- * - "tier": descending by tier.total
+ * - "tier": descending by effective tier
  * - "name": ascending by display_name (localeCompare)
  * - "base:<key>": descending by base_stats[key]; items without the stat sort last
  * - "modcat:<category>": descending by modifier_stats[category] score;
- *   items without the stat sort last; secondary sort is tier.total descending
+ *   items without the stat sort last; secondary sort is effective tier descending
  *
  * The original array is not mutated.
  */
 export function sortItems(items: Item[], sortKey: string): Item[] {
   return [...items].sort((a, b) => {
+    const tierCmp = (): number => getEffectiveTier(b) - getEffectiveTier(a)
+
     if (sortKey === 'tier') {
-      return b.tier.total - a.tier.total
+      return tierCmp()
     }
 
     if (sortKey === 'name') {
       const cmp = a.display_name.localeCompare(b.display_name)
-      return cmp !== 0 ? cmp : b.tier.total - a.tier.total
+      return cmp !== 0 ? cmp : tierCmp()
     }
 
     if (sortKey.startsWith(PREFIX_BASE)) {
@@ -69,7 +73,7 @@ export function sortItems(items: Item[], sortKey: string): Item[] {
       const aVal = a.base_stats[statKey] ?? -1
       const bVal = b.base_stats[statKey] ?? -1
       if (bVal !== aVal) return bVal - aVal
-      return b.tier.total - a.tier.total
+      return tierCmp()
     }
 
     if (sortKey.startsWith(PREFIX_MODCAT)) {
@@ -77,7 +81,7 @@ export function sortItems(items: Item[], sortKey: string): Item[] {
       const aVal = a.modifier_stats[category] ?? -1
       const bVal = b.modifier_stats[category] ?? -1
       if (bVal !== aVal) return bVal - aVal
-      return b.tier.total - a.tier.total
+      return tierCmp()
     }
 
     return 0

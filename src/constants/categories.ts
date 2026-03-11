@@ -33,5 +33,7 @@ export const LS_KEYS = {
   SORT: 'icarus:sort',
   DISABLED_TALENTS: 'icarus:disabledTalents',
   DISABLED_FEATURES: 'icarus:disabledFeatures',
+  DISABLED_BLUEPRINTS: 'icarus:disabledBlueprints',
+  WORKSHOP_DISABLED: 'icarus:workshopDisabled',
   SLOTS: 'icarus:slots',
 } as const

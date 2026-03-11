@@ -1,6 +1,6 @@
 /**
  * Modal that shows a short "How to use" guide for the Icarus Consumables UI.
- * Matches the style of FeatureModal and TalentModal.
+ * Matches the style of FilterModal.
  */
 interface HowToModalProps {
   /** Called when the modal should be closed. */

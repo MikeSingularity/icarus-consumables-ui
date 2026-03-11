@@ -8,6 +8,7 @@ import {
   formatRecipeLabel,
 } from '@/utils/formatters'
 import { getEffectiveRecipeId, getAvailableRecipeIds } from '@/utils/farmingCalc'
+import { getEffectiveTier } from '@/utils/requirements'
 import { dlcColour } from '@/utils/dlcbadge'
 import { BASE_STAT_DISPLAY_ORDER } from '@/constants/categories'
 import type { Item, Modifier, Recipe, StatMetadataEntry, Generic } from '@/types/consumables'
@@ -19,6 +20,8 @@ interface ConsumableCardProps {
   statMetadata: Record<string, StatMetadataEntry>
   /** When true, the card is rendered at reduced opacity (talent not unlocked). */
   dimmed: boolean
+  /** When true, the card cannot be selected (filter requirement unchecked); click has no effect. */
+  selectionDisabled: boolean
   /** When true, the card is highlighted as part of the active loadout. */
   selected: boolean
   /** When true, the card shares a modifier with a selected item and cannot be added. */
@@ -66,6 +69,7 @@ export function ConsumableCard({
   recipes,
   statMetadata,
   dimmed,
+  selectionDisabled,
   selected,
   conflicted,
   onClick,
@@ -78,8 +82,8 @@ export function ConsumableCard({
   onSetRecipe,
   onSetGeneric,
 }: ConsumableCardProps): React.JSX.Element {
-  const tierBase = Math.floor(item.tier.total)
-  const tierColour = TIER_COLOURS[tierBase] ?? 'bg-gray-700 text-gray-200'
+  const effectiveTier = getEffectiveTier(item)
+  const tierColour = TIER_COLOURS[effectiveTier] ?? 'bg-gray-700 text-gray-200'
 
   const effectiveRecipeId = getEffectiveRecipeId(item, itemsMap, recipeOverrides)
   const effectiveRecipe = effectiveRecipeId !== undefined ? recipes[effectiveRecipeId] : undefined
@@ -90,7 +94,7 @@ export function ConsumableCard({
     const bench = firstRecipe?.benches[0]
     if (item.traits?.is_harvested) return bench !== undefined ? `Gathered / ${bench}` : 'Gathered'
     if (bench !== undefined) return bench
-    if (item.traits?.is_orbital) return 'Orbital'
+    if (item.requirements?.workshop !== undefined) return 'Workshop'
     return 'Unknown'
   })()
 
@@ -110,47 +114,49 @@ export function ConsumableCard({
   const opacityClass = conflicted ? 'opacity-50' : dimmed ? 'opacity-35' : 'opacity-100'
   const borderClass = selected
     ? 'border-blue-500 ring-1 ring-blue-500'
-    : 'border-gray-700' + (conflicted ? '' : ' hover:border-gray-500')
+    : 'border-gray-700' + (conflicted || selectionDisabled ? '' : ' hover:border-gray-500')
+
+  const notClickable = conflicted || selectionDisabled
 
   /** Stop propagation so clicking a select does not toggle the card. */
   const stopProp = (e: React.MouseEvent) => e.stopPropagation()
 
   return (
     <div
-      role={conflicted ? undefined : 'button'}
-      tabIndex={conflicted ? -1 : 0}
-      onClick={conflicted ? undefined : onClick}
+      role={notClickable ? undefined : 'button'}
+      tabIndex={notClickable ? -1 : 0}
+      onClick={notClickable ? undefined : onClick}
       onKeyDown={
-        conflicted
+        notClickable
           ? undefined
           : (e) => {
               if (e.key === 'Enter' || e.key === ' ') onClick()
             }
       }
-      aria-disabled={conflicted}
+      aria-disabled={notClickable}
       className={`flex select-none flex-col rounded-lg border bg-gray-800 transition-all ${
-        conflicted ? 'cursor-not-allowed' : 'cursor-pointer'
+        notClickable ? 'cursor-not-allowed' : 'cursor-pointer'
       } ${borderClass} ${opacityClass}`}
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-2 px-3 pt-3">
         <div className="flex items-center gap-2">
           <span className={`shrink-0 rounded px-1.5 py-0.5 text-xs font-bold ${tierColour}`}>
-            T{item.tier.total}
+            T{effectiveTier > Math.floor(item.tier.total) ? effectiveTier : item.tier.total}
           </span>
           <span className="text-sm font-semibold text-gray-100 leading-tight">
             {item.display_name}
           </span>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
-          {item.traits?.is_orbital && (
-            <Satellite size={14} className="mt-0.5 text-cyan-400" aria-label="Orbital" />
+          {item.requirements?.workshop !== undefined && (
+            <Satellite size={14} className="mt-0.5 text-cyan-400" aria-label="Workshop" />
           )}
-          {item.required_features !== undefined && item.required_features.length > 0 && (
+          {item.requirements?.features !== undefined && item.requirements.features.length > 0 && (
             <PackageOpen
               size={14}
-              className={`mt-0.5 ${dlcColour(item.required_features[0]!)}`}
-              aria-label={`DLC: ${item.required_features.join(', ')}`}
+              className={`mt-0.5 ${dlcColour(item.requirements.features[0]!)}`}
+              aria-label={`DLC: ${item.requirements.features.join(', ')}`}
             />
           )}
         </div>
