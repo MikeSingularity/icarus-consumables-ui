@@ -15,6 +15,8 @@ export interface FilterState {
   disabledFeatures: Set<string>
   /** Set of blueprint requirement IDs whose items should be dimmed. */
   disabledBlueprints: Set<string>
+  /** Set of mission requirement IDs whose items should be dimmed. */
+  disabledMissions: Set<string>
   /** When true, items with any workshop requirement (e.g. Orbital Workshop) are dimmed. */
   workshopDisabled: boolean
 }
@@ -50,6 +52,8 @@ export function useFilterState(): {
   enableAllFeatures: () => void
   toggleBlueprint: (blueprint: string) => void
   enableAllBlueprints: () => void
+  toggleMission: (mission: string) => void
+  enableAllMissions: () => void
   workshopDisabled: boolean
   toggleWorkshop: () => void
   enableAllRequirements: () => void
@@ -75,6 +79,10 @@ export function useFilterState(): {
 
   const [disabledBlueprints, setDisabledBlueprints] = useState<Set<string>>(() =>
     readLs(LS_KEYS.DISABLED_BLUEPRINTS, new Set<string>(), parseSet),
+  )
+
+  const [disabledMissions, setDisabledMissions] = useState<Set<string>>(() =>
+    readLs(LS_KEYS.DISABLED_MISSIONS, new Set<string>(), parseSet),
   )
 
   const [workshopDisabled, setWorkshopDisabled] = useState<boolean>(() =>
@@ -145,6 +153,24 @@ export function useFilterState(): {
     localStorage.setItem(LS_KEYS.DISABLED_BLUEPRINTS, JSON.stringify([]))
   }, [])
 
+  const toggleMission = useCallback((mission: string) => {
+    setDisabledMissions((prev) => {
+      const next = new Set(prev)
+      if (next.has(mission)) {
+        next.delete(mission)
+      } else {
+        next.add(mission)
+      }
+      localStorage.setItem(LS_KEYS.DISABLED_MISSIONS, JSON.stringify([...next]))
+      return next
+    })
+  }, [])
+
+  const enableAllMissions = useCallback(() => {
+    setDisabledMissions(new Set())
+    localStorage.setItem(LS_KEYS.DISABLED_MISSIONS, JSON.stringify([]))
+  }, [])
+
   const toggleWorkshop = useCallback(() => {
     setWorkshopDisabled((prev) => {
       const next = !prev
@@ -157,15 +183,17 @@ export function useFilterState(): {
     setDisabledTalents(new Set())
     setDisabledFeatures(new Set())
     setDisabledBlueprints(new Set())
+    setDisabledMissions(new Set())
     setWorkshopDisabled(false)
     localStorage.setItem(LS_KEYS.DISABLED_TALENTS, JSON.stringify([]))
     localStorage.setItem(LS_KEYS.DISABLED_FEATURES, JSON.stringify([]))
     localStorage.setItem(LS_KEYS.DISABLED_BLUEPRINTS, JSON.stringify([]))
+    localStorage.setItem(LS_KEYS.DISABLED_MISSIONS, JSON.stringify([]))
     localStorage.setItem(LS_KEYS.WORKSHOP_DISABLED, 'false')
   }, [])
 
   return {
-    filterState: { tier, sortKey, disabledTalents, disabledFeatures, disabledBlueprints, workshopDisabled },
+    filterState: { tier, sortKey, disabledTalents, disabledFeatures, disabledBlueprints, disabledMissions, workshopDisabled },
     setTier,
     setSortKey,
     toggleTalent,
@@ -174,6 +202,8 @@ export function useFilterState(): {
     enableAllFeatures,
     toggleBlueprint,
     enableAllBlueprints,
+    toggleMission,
+    enableAllMissions,
     workshopDisabled,
     toggleWorkshop,
     enableAllRequirements,

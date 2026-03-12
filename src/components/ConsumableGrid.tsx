@@ -12,6 +12,8 @@ interface ConsumableGridProps {
   filterState: FilterState
   selectedNames: Set<string>
   blockedModIds: Set<string>
+  featureColors: Record<string, string>
+  missionColors: Record<string, string>
   onToggleItem: (item: Item) => void
   cardViewMode: 'modifiers' | 'recipe'
   itemsMap: Record<string, Item>
@@ -27,7 +29,7 @@ interface ConsumableGridProps {
  * Applies tier filtering, sorting, talent dimming, and feature dimming based on filterState.
  * Items currently in the loadout are always shown even if they would be filtered out by tier.
  */
-export function ConsumableGrid({
+export default function ConsumableGrid({
   items,
   modifiers,
   recipes,
@@ -35,6 +37,8 @@ export function ConsumableGrid({
   filterState,
   selectedNames,
   blockedModIds,
+  featureColors,
+  missionColors,
   onToggleItem,
   cardViewMode,
   itemsMap,
@@ -44,7 +48,7 @@ export function ConsumableGrid({
   onSetRecipe,
   onSetGeneric,
 }: ConsumableGridProps): React.JSX.Element {
-  const { tier, sortKey, disabledTalents, disabledFeatures, disabledBlueprints, workshopDisabled } =
+  const { tier, sortKey, disabledTalents, disabledFeatures, disabledBlueprints, disabledMissions, workshopDisabled } =
     filterState
 
   const tierFiltered = items.filter((item) => getEffectiveTier(item) <= tier)
@@ -73,6 +77,8 @@ export function ConsumableGrid({
           (item.requirements?.features?.some((f) => disabledFeatures.has(f)) ?? false) ||
           (item.requirements?.blueprint !== undefined &&
             disabledBlueprints.has(item.requirements.blueprint)) ||
+          (item.requirements?.mission !== undefined &&
+            disabledMissions.has(String(item.requirements.mission))) ||
           (item.requirements?.workshop !== undefined && workshopDisabled)
         const dimmed = filterDimmed || shownOnlyAsLoadout.has(item.name)
         return (
@@ -96,6 +102,8 @@ export function ConsumableGrid({
             recipeOverrides={recipeOverrides}
             genericSelections={genericSelections}
             genericsMap={genericsMap}
+            featureColors={featureColors}
+            missionColors={missionColors}
             onSetRecipe={onSetRecipe}
             onSetGeneric={onSetGeneric}
           />

@@ -34,6 +34,7 @@ export const LS_KEYS = {
   DISABLED_TALENTS: 'icarus:disabledTalents',
   DISABLED_FEATURES: 'icarus:disabledFeatures',
   DISABLED_BLUEPRINTS: 'icarus:disabledBlueprints',
+  DISABLED_MISSIONS: 'icarus:disabledMissions',
   WORKSHOP_DISABLED: 'icarus:workshopDisabled',
   SLOTS: 'icarus:slots',
 } as const

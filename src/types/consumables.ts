@@ -3,6 +3,9 @@
  * See docs/minified_README.md for the full schema.
  */
 
+/** Value in the top-level requirements registry: display name string or object with display_name. */
+export type RequirementRegistryValue = string | { display_name: string }
+
 export interface ConsumablesData {
   metadata: Metadata
   items: Item[]
@@ -11,7 +14,8 @@ export interface ConsumablesData {
   modifiers: Record<string, Modifier>
   stats: Record<string, StatMetadataEntry>
   features?: Record<string, string>
-  requirements?: Record<string, string>
+  /** Requirement ID -> display name (string or { display_name }). Used for talent, blueprint, mission, etc. */
+  requirements?: Record<string, RequirementRegistryValue>
 }
 
 export interface Metadata {
@@ -63,6 +67,7 @@ export interface Requirements {
   talent?: string
   blueprint?: string
   workshop?: string
+  mission?: string
   tier?: number
   features?: string[]
   character?: number

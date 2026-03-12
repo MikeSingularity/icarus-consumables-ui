@@ -11,18 +11,25 @@ interface FilterBarProps {
   talents: string[]
   features: string[]
   blueprints: string[]
+  missions: string[]
   requirementsRegistry: Record<string, string>
   featureNames: Record<string, string>
+  featureColors: Record<string, string>
+  missionColors: Record<string, string>
   disabledTalents: Set<string>
   disabledFeatures: Set<string>
   disabledBlueprints: Set<string>
+  disabledMissions: Set<string>
   /** When true, items with any workshop requirement are dimmed. */
   workshopDisabled: boolean
   /** True if any item has a workshop requirement. */
   hasWorkshopItems: boolean
+  /** True if any item has a mission requirement. */
+  hasMissionItems: boolean
   onToggleTalent: (talent: string) => void
   onToggleFeature: (feature: string) => void
   onToggleBlueprint: (blueprint: string) => void
+  onToggleMission: (mission: string) => void
   onToggleWorkshop: () => void
   onEnableAllRequirements: () => void
   cardViewMode: 'modifiers' | 'recipe'
@@ -43,16 +50,22 @@ export function FilterBar({
   talents,
   features,
   blueprints,
+  missions,
   requirementsRegistry,
   featureNames,
+  featureColors,
+  missionColors,
   disabledTalents,
   disabledFeatures,
   disabledBlueprints,
+  disabledMissions,
   workshopDisabled,
   hasWorkshopItems,
+  hasMissionItems,
   onToggleTalent,
   onToggleFeature,
   onToggleBlueprint,
+  onToggleMission,
   onToggleWorkshop,
   onEnableAllRequirements,
   cardViewMode,
@@ -64,9 +77,14 @@ export function FilterBar({
     disabledTalents.size +
     disabledFeatures.size +
     disabledBlueprints.size +
+    disabledMissions.size +
     (workshopDisabled ? 1 : 0)
   const showFilterButton =
-    talents.length > 0 || features.length > 0 || blueprints.length > 0 || hasWorkshopItems
+    talents.length > 0 ||
+    features.length > 0 ||
+    blueprints.length > 0 ||
+    hasWorkshopItems ||
+    hasMissionItems
 
   return (
     <>
@@ -150,16 +168,21 @@ export function FilterBar({
           talents={talents}
           features={features}
           blueprints={blueprints}
+          missions={missions}
           hasWorkshopItems={hasWorkshopItems}
           requirementsRegistry={requirementsRegistry}
           featureNames={featureNames}
+          featureColors={featureColors}
+          missionColors={missionColors}
           disabledTalents={disabledTalents}
           disabledFeatures={disabledFeatures}
           disabledBlueprints={disabledBlueprints}
+          disabledMissions={disabledMissions}
           workshopDisabled={workshopDisabled}
           onToggleTalent={onToggleTalent}
           onToggleFeature={onToggleFeature}
           onToggleBlueprint={onToggleBlueprint}
+          onToggleMission={onToggleMission}
           onToggleWorkshop={onToggleWorkshop}
           onEnableAllRequirements={onEnableAllRequirements}
           onClose={() => setFilterModalOpen(false)}

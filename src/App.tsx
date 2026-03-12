@@ -13,12 +13,13 @@ import {
 import { computeFarmingResult } from '@/utils/farmingCalc'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { FilterBar } from '@/components/FilterBar'
-import { ConsumableGrid } from '@/components/ConsumableGrid'
+import ConsumableGrid from '@/components/ConsumableGrid'
 import { LoadoutPanel } from '@/components/LoadoutPanel'
 import { FarmingPanel } from '@/components/FarmingPanel'
 import { HowToModal } from '@/components/HowToModal'
 import { QrCodeModal } from '@/components/QrCodeModal'
 import { ISSUES_URL } from '@/constants/appLinks'
+import { buildOrderedColorMap } from '@/utils/dlcbadge'
 
 /**
  * Root application component.
@@ -33,6 +34,7 @@ export default function App(): React.JSX.Element {
     toggleTalent,
     toggleFeature,
     toggleBlueprint,
+    toggleMission,
     toggleWorkshop,
     enableAllRequirements,
   } = useFilterState()
@@ -86,6 +88,24 @@ export default function App(): React.JSX.Element {
 
   const itemsMap = useMemo(() => (data !== null ? buildItemsMap(data.items) : {}), [data])
   const genericsMap = useMemo(() => (data !== null ? buildGenericsMap(data.generics) : {}), [data])
+
+  const features = useMemo(() => {
+    if (foodItems === null) return []
+    return [...new Set(foodItems.flatMap((item) => item.requirements?.features ?? []))].sort()
+  }, [foodItems])
+  const missions = useMemo(() => {
+    if (foodItems === null) return []
+    return [
+      ...new Set(
+        foodItems
+          .map((item) => item.requirements?.mission)
+          .filter((m): m is string => m != null)
+          .map((m) => String(m)),
+      ),
+    ].sort()
+  }, [foodItems])
+  const featureColors = useMemo(() => buildOrderedColorMap(features), [features])
+  const missionColors = useMemo(() => buildOrderedColorMap(missions), [missions])
 
   const loadoutItemsWithModifiers = useMemo(
     () => selectedItems.filter((item) => item.modifiers.length > 0),
@@ -188,22 +208,22 @@ export default function App(): React.JSX.Element {
     ),
   ].sort()
 
-  // Feature IDs that appear on at least one consumable (only these are shown in the filter).
-  const featuresFromConsumables = [
-    ...new Set(items.flatMap((item) => item.requirements?.features ?? [])),
-  ].sort()
-
   // Build a display-name dict for DLC features. Prefer the top-level features dict when present.
   const featureNames: Record<string, string> =
     data.features != null && Object.keys(data.features).length > 0
       ? data.features
-      : Object.fromEntries(featuresFromConsumables.map((f) => [f, f]))
-
-  const features = featuresFromConsumables
+      : Object.fromEntries(features.map((f) => [f, f]))
 
   const hasWorkshopItems = items.some((item) => item.requirements?.workshop !== undefined)
+  const hasMissionItems = items.some((item) => item.requirements?.mission !== undefined)
 
-  const requirementsRegistry = data.requirements ?? {}
+  // Normalize requirements registry from top-level data.requirements (talent, blueprint, workshop, mission, etc.).
+  const requirementsRegistry: Record<string, string> = {}
+  const toDisplay = (val: unknown, id: string): string =>
+    typeof val === 'string' ? val : (val as { display_name?: string })?.display_name ?? id
+  for (const [id, val] of Object.entries(data.requirements ?? {})) {
+    requirementsRegistry[id] = toDisplay(val, id)
+  }
 
   const sortOptions = buildSortOptions(items, data.stats)
 
@@ -286,16 +306,22 @@ export default function App(): React.JSX.Element {
           talents={talents}
           features={features}
           blueprints={blueprints}
+          missions={missions}
           requirementsRegistry={requirementsRegistry}
           featureNames={featureNames}
+          featureColors={featureColors}
+          missionColors={missionColors}
           disabledTalents={filterState.disabledTalents}
           disabledFeatures={filterState.disabledFeatures}
           disabledBlueprints={filterState.disabledBlueprints}
+          disabledMissions={filterState.disabledMissions}
           workshopDisabled={filterState.workshopDisabled}
           hasWorkshopItems={hasWorkshopItems}
+          hasMissionItems={hasMissionItems}
           onToggleTalent={toggleTalent}
           onToggleFeature={toggleFeature}
           onToggleBlueprint={toggleBlueprint}
+          onToggleMission={toggleMission}
           onToggleWorkshop={toggleWorkshop}
           onEnableAllRequirements={enableAllRequirements}
           cardViewMode={cardViewMode}
@@ -313,6 +339,8 @@ export default function App(): React.JSX.Element {
             filterState={{ ...filterState, sortKey: validSortKey }}
             selectedNames={selectedNames}
             blockedModIds={blockedModIds}
+            featureColors={featureColors}
+            missionColors={missionColors}
             onToggleItem={toggleItem}
             cardViewMode={cardViewMode}
             itemsMap={itemsMap}

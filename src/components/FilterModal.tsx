@@ -1,6 +1,6 @@
-import { PackageOpen, Satellite } from 'lucide-react'
+import { Flag, PackageOpen, Satellite } from 'lucide-react'
 import { formatTalentLabel } from '@/utils/formatters'
-import { dlcColour } from '@/utils/dlcbadge'
+import { getRequirementColour } from '@/utils/dlcbadge'
 
 interface FilterModalProps {
   /** All unique talent requirement IDs derived from food items. */
@@ -9,25 +9,34 @@ interface FilterModalProps {
   features: string[]
   /** All unique blueprint requirement IDs derived from items. */
   blueprints: string[]
+  /** All unique mission requirement IDs derived from items. */
+  missions: string[]
   /** Whether any item has a workshop requirement (e.g. Orbital Workshop). */
   hasWorkshopItems: boolean
   /** Requirement ID -> display name; used for human-readable labels. */
   requirementsRegistry: Record<string, string>
   /** Feature ID -> display name. */
   featureNames: Record<string, string>
+  /** Feature ID -> Tailwind colour class (order-based). */
+  featureColors: Record<string, string>
+  /** Mission ID -> Tailwind colour class (order-based). */
+  missionColors: Record<string, string>
   /** Set of talent IDs currently disabled (items requiring these are dimmed). */
   disabledTalents: Set<string>
   /** Set of feature IDs currently disabled. */
   disabledFeatures: Set<string>
   /** Set of blueprint IDs currently disabled. */
   disabledBlueprints: Set<string>
+  /** Set of mission IDs currently disabled. */
+  disabledMissions: Set<string>
   /** When true, items with any workshop requirement are dimmed. */
   workshopDisabled: boolean
   onToggleTalent: (talent: string) => void
   onToggleFeature: (feature: string) => void
   onToggleBlueprint: (blueprint: string) => void
+  onToggleMission: (mission: string) => void
   onToggleWorkshop: () => void
-  /** Enables all talents, features, blueprints, and workshop. */
+  /** Enables all talents, features, blueprints, missions, and workshop. */
   onEnableAllRequirements: () => void
   onClose: () => void
 }
@@ -40,22 +49,31 @@ export function FilterModal({
   talents,
   features,
   blueprints,
+  missions,
   hasWorkshopItems,
   requirementsRegistry,
   featureNames,
+  featureColors,
+  missionColors,
   disabledTalents,
   disabledFeatures,
   disabledBlueprints,
+  disabledMissions,
   workshopDisabled,
   onToggleTalent,
   onToggleFeature,
   onToggleBlueprint,
+  onToggleMission,
   onToggleWorkshop,
   onEnableAllRequirements,
   onClose,
 }: FilterModalProps): React.JSX.Element {
   const hasAny =
-    talents.length > 0 || features.length > 0 || blueprints.length > 0 || hasWorkshopItems
+    talents.length > 0 ||
+    features.length > 0 ||
+    blueprints.length > 0 ||
+    missions.length > 0 ||
+    hasWorkshopItems
 
   return (
     <div
@@ -90,7 +108,7 @@ export function FilterModal({
 
           {!hasAny && (
             <p className="text-xs text-gray-500">
-              No talent, DLC, blueprint, or workshop requirements in this data.
+              No talent, DLC, blueprint, mission, or workshop requirements in this data.
             </p>
           )}
 
@@ -141,7 +159,7 @@ export function FilterModal({
                         {displayName}
                         <PackageOpen
                           size={14}
-                          className={`shrink-0 ${dlcColour(id)}`}
+                          className={`shrink-0 ${getRequirementColour(id, featureColors)}`}
                           aria-hidden
                         />
                       </label>
@@ -170,6 +188,32 @@ export function FilterModal({
                       className="cursor-pointer text-sm text-gray-200"
                     >
                       {requirementsRegistry[blueprint] ?? formatTalentLabel(blueprint)}
+                    </label>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {missions.length > 0 && (
+            <section className="mb-4">
+              <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Missions</h3>
+              <ul className="space-y-2">
+                {missions.map((mission) => (
+                  <li key={mission} className="flex items-center gap-2">
+                    <input
+                      id={`filter-mission-${mission}`}
+                      type="checkbox"
+                      checked={!disabledMissions.has(mission)}
+                      onChange={() => onToggleMission(mission)}
+                      className="h-4 w-4 accent-blue-400"
+                    />
+                    <label
+                      htmlFor={`filter-mission-${mission}`}
+                      className="flex cursor-pointer items-center gap-2 text-sm text-gray-200"
+                    >
+                      {requirementsRegistry[mission] ?? formatTalentLabel(mission)}
+                      <Flag size={14} className={`shrink-0 ${getRequirementColour(mission, missionColors)}`} aria-hidden />
                     </label>
                   </li>
                 ))}

@@ -1,4 +1,4 @@
-import { PackageOpen, Satellite } from 'lucide-react'
+import { Flag, PackageOpen, Satellite } from 'lucide-react'
 import {
   formatLifetime,
   formatEffectKey,
@@ -9,7 +9,7 @@ import {
 } from '@/utils/formatters'
 import { getEffectiveRecipeId, getAvailableRecipeIds } from '@/utils/farmingCalc'
 import { getEffectiveTier } from '@/utils/requirements'
-import { dlcColour } from '@/utils/dlcbadge'
+import { getRequirementColour } from '@/utils/dlcbadge'
 import { BASE_STAT_DISPLAY_ORDER } from '@/constants/categories'
 import type { Item, Modifier, Recipe, StatMetadataEntry, Generic } from '@/types/consumables'
 
@@ -40,6 +40,10 @@ interface ConsumableCardProps {
   genericSelections: Record<string, string>
   /** Generic id -> Generic object. */
   genericsMap: Record<string, Generic>
+  /** Feature ID -> Tailwind colour class (order-based). */
+  featureColors: Record<string, string>
+  /** Mission ID -> Tailwind colour class (order-based). */
+  missionColors: Record<string, string>
   onSetRecipe: (itemName: string, recipeId: string) => void
   onSetGeneric: (genericId: string, itemName: string) => void
 }
@@ -79,6 +83,8 @@ export function ConsumableCard({
   recipeOverrides,
   genericSelections,
   genericsMap,
+  featureColors,
+  missionColors,
   onSetRecipe,
   onSetGeneric,
 }: ConsumableCardProps): React.JSX.Element {
@@ -152,10 +158,17 @@ export function ConsumableCard({
           {item.requirements?.workshop !== undefined && (
             <Satellite size={14} className="mt-0.5 text-cyan-400" aria-label="Workshop" />
           )}
+          {item.requirements?.mission !== undefined && (
+            <Flag
+              size={14}
+              className={`mt-0.5 ${getRequirementColour(String(item.requirements.mission), missionColors)}`}
+              aria-label="Mission required"
+            />
+          )}
           {item.requirements?.features !== undefined && item.requirements.features.length > 0 && (
             <PackageOpen
               size={14}
-              className={`mt-0.5 ${dlcColour(item.requirements.features[0]!)}`}
+              className={`mt-0.5 ${getRequirementColour(item.requirements.features[0]!, featureColors)}`}
               aria-label={`DLC: ${item.requirements.features.join(', ')}`}
             />
           )}
