@@ -14,10 +14,11 @@ export function formatBuffLabel(label: string): string {
  * Returns "Instant" for lifetime === 0 (defensive case; not expected for food items).
  */
 export function formatLifetime(seconds: number): string {
-  if (seconds === 0) return 'Instant'
-  if (seconds < 60) return `${seconds}s`
-  const minutes = Math.floor(seconds / 60)
-  const remainingSeconds = seconds % 60
+  const rounded = Math.round(seconds)
+  if (rounded === 0) return 'Instant'
+  if (rounded < 60) return `${rounded}s`
+  const minutes = Math.floor(rounded / 60)
+  const remainingSeconds = rounded % 60
   if (remainingSeconds === 0) return `${minutes} min`
   return `${minutes} min ${remainingSeconds}s`
 }

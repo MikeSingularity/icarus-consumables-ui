@@ -5,6 +5,8 @@ import {
   type FarmingValidationContext,
 } from '@/utils/urlState'
 
+const FARMING_GLOBALS_KEY = 'icarus_farming_globals_v1'
+
 /**
  * State for the farming calculator user-configurable inputs.
  *
@@ -21,6 +23,10 @@ interface FarmingState {
   recipeOverrides: Record<string, string>
   genericSelections: Record<string, string>
   derivedRecipeOverrides: Record<string, string>
+  /** Global farming growth speed bonus in percent (e.g. 10 for +10%). */
+  farmingGrowthBonusPct: number
+  /** Global farming yield bonus in percent (e.g. 10 for +10%). */
+  farmingYieldBonusPct: number
 }
 
 export function useFarmingState(validationContext: FarmingValidationContext | null = null): {
@@ -28,10 +34,14 @@ export function useFarmingState(validationContext: FarmingValidationContext | nu
   recipeOverrides: Record<string, string>
   genericSelections: Record<string, string>
   derivedRecipeOverrides: Record<string, string>
+  farmingGrowthBonusPct: number
+  farmingYieldBonusPct: number
   setServingsOverride: (itemName: string, value: number) => void
   setRecipeOverride: (itemName: string, recipeId: string) => void
   setGenericSelection: (genericId: string, itemName: string) => void
   setDerivedRecipeOverride: (ingredientName: string, recipeId: string) => void
+  setFarmingGrowthBonusPct: (bonusPct: number) => void
+  setFarmingYieldBonusPct: (bonusPct: number) => void
   resetFarmingState: () => void
 } {
   const [state, setState] = useState<FarmingState>({
@@ -39,7 +49,30 @@ export function useFarmingState(validationContext: FarmingValidationContext | nu
     recipeOverrides: {},
     genericSelections: {},
     derivedRecipeOverrides: {},
+    farmingGrowthBonusPct: 0,
+    farmingYieldBonusPct: 0,
   })
+
+  // Restore global farming modifiers from localStorage (once on mount).
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      const raw = window.localStorage.getItem(FARMING_GLOBALS_KEY)
+      if (!raw) return
+      const parsed = JSON.parse(raw) as Partial<
+        Pick<FarmingState, 'farmingGrowthBonusPct' | 'farmingYieldBonusPct'>
+      >
+      setState((prev) => ({
+        ...prev,
+        farmingGrowthBonusPct:
+          typeof parsed.farmingGrowthBonusPct === 'number' ? parsed.farmingGrowthBonusPct : prev.farmingGrowthBonusPct,
+        farmingYieldBonusPct:
+          typeof parsed.farmingYieldBonusPct === 'number' ? parsed.farmingYieldBonusPct : prev.farmingYieldBonusPct,
+      }))
+    } catch {
+      // Ignore malformed localStorage; fall back to defaults.
+    }
+  }, [])
 
   const hasRestoredFromUrl = useRef(false)
   useEffect(() => {
@@ -101,18 +134,52 @@ export function useFarmingState(validationContext: FarmingValidationContext | nu
       recipeOverrides: {},
       genericSelections: {},
       derivedRecipeOverrides: {},
+      farmingGrowthBonusPct: 0,
+      farmingYieldBonusPct: 0,
     })
   }, [])
+
+  const setFarmingGrowthBonusPct = useCallback((bonusPct: number) => {
+    setState((prev) => ({
+      ...prev,
+      farmingGrowthBonusPct: bonusPct,
+    }))
+  }, [])
+
+  const setFarmingYieldBonusPct = useCallback((bonusPct: number) => {
+    setState((prev) => ({
+      ...prev,
+      farmingYieldBonusPct: bonusPct,
+    }))
+  }, [])
+
+  // Persist global farming modifiers to localStorage whenever they change.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      const payload = {
+        farmingGrowthBonusPct: state.farmingGrowthBonusPct,
+        farmingYieldBonusPct: state.farmingYieldBonusPct,
+      }
+      window.localStorage.setItem(FARMING_GLOBALS_KEY, JSON.stringify(payload))
+    } catch {
+      // Ignore storage errors (e.g. quota, privacy mode).
+    }
+  }, [state.farmingGrowthBonusPct, state.farmingYieldBonusPct])
 
   return {
     servingsOverrides: state.servingsOverrides,
     recipeOverrides: state.recipeOverrides,
     genericSelections: state.genericSelections,
     derivedRecipeOverrides: state.derivedRecipeOverrides,
+    farmingGrowthBonusPct: state.farmingGrowthBonusPct,
+    farmingYieldBonusPct: state.farmingYieldBonusPct,
     setServingsOverride,
     setRecipeOverride,
     setGenericSelection,
     setDerivedRecipeOverride,
+    setFarmingGrowthBonusPct,
+    setFarmingYieldBonusPct,
     resetFarmingState,
   }
 }

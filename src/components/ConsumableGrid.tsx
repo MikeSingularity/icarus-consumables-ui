@@ -12,6 +12,10 @@ interface ConsumableGridProps {
   filterState: FilterState
   selectedNames: Set<string>
   blockedModIds: Set<string>
+  /** Requirement ID -> display name; used for hover labels on icons. */
+  requirementsRegistry: Record<string, string>
+  /** Feature ID -> display name; used for DLC hover labels. */
+  featureNames: Record<string, string>
   featureColors: Record<string, string>
   missionColors: Record<string, string>
   onToggleItem: (item: Item) => void
@@ -37,6 +41,8 @@ export default function ConsumableGrid({
   filterState,
   selectedNames,
   blockedModIds,
+  requirementsRegistry,
+  featureNames,
   featureColors,
   missionColors,
   onToggleItem,
@@ -102,6 +108,8 @@ export default function ConsumableGrid({
             recipeOverrides={recipeOverrides}
             genericSelections={genericSelections}
             genericsMap={genericsMap}
+            requirementsRegistry={requirementsRegistry}
+            featureNames={featureNames}
             featureColors={featureColors}
             missionColors={missionColors}
             onSetRecipe={onSetRecipe}

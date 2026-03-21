@@ -23,10 +23,16 @@ interface FarmingPanelProps {
   recipeOverrides: Record<string, string>
   genericSelections: Record<string, string>
   derivedRecipeOverrides: Record<string, string>
+  /** Global farming growth speed bonus in percent (e.g. 10 for +10%). */
+  farmingGrowthBonusPct: number
+  /** Global farming yield bonus in percent (e.g. 10 for +10%). */
+  farmingYieldBonusPct: number
   onSetServings: (itemName: string, value: number) => void
   onSetRecipe: (itemName: string, recipeId: string) => void
   onSetGeneric: (genericId: string, itemName: string) => void
   onSetDerivedRecipe: (ingredientName: string, recipeId: string) => void
+  onSetFarmingGrowthBonusPct: (bonusPct: number) => void
+  onSetFarmingYieldBonusPct: (bonusPct: number) => void
 }
 
 /**
@@ -45,10 +51,14 @@ export function FarmingPanel({
   recipeOverrides,
   genericSelections,
   derivedRecipeOverrides,
+  farmingGrowthBonusPct,
+  farmingYieldBonusPct,
   onSetServings,
   onSetRecipe,
   onSetGeneric,
   onSetDerivedRecipe,
+  onSetFarmingGrowthBonusPct,
+  onSetFarmingYieldBonusPct,
 }: FarmingPanelProps): React.JSX.Element | null {
   const itemsMap = useMemo(() => buildItemsMap(allItems), [allItems])
   const genericsMap = useMemo(() => buildGenericsMap(generics), [generics])
@@ -71,6 +81,8 @@ export function FarmingPanel({
         genericSelections,
         derivedRecipeOverrides,
         statMetadata,
+        farmingGrowthBonusPct,
+        farmingYieldBonusPct,
       }),
     [
       loadoutItemsWithModifiers,
@@ -83,6 +95,8 @@ export function FarmingPanel({
       genericSelections,
       derivedRecipeOverrides,
       statMetadata,
+      farmingGrowthBonusPct,
+      farmingYieldBonusPct,
     ],
   )
 
@@ -187,6 +201,49 @@ export function FarmingPanel({
           ))}
         </div>
       )}
+
+      {/* Global farming modifiers (affect crop growth speed and yield) */}
+      <div className="mb-5 flex flex-wrap items-center gap-4 text-xs text-gray-400">
+        <label className="flex items-center gap-1.5">
+          Growth speed
+          <input
+            type="number"
+            step="5"
+            min={-90}
+            max={500}
+            value={Math.round(farmingGrowthBonusPct)}
+            onChange={(e) => {
+              const v = parseFloat(e.target.value)
+              if (!Number.isNaN(v)) {
+                onSetFarmingGrowthBonusPct(v)
+              }
+            }}
+            className="w-16 rounded border border-gray-600 bg-gray-800 px-1.5 py-0.5 text-right text-gray-200 focus:border-blue-500 focus:outline-none"
+          />
+          <span>%</span>
+        </label>
+        <label className="flex items-center gap-1.5">
+          Yield per harvest
+          <input
+            type="number"
+            step="5"
+            min={-90}
+            max={500}
+            value={Math.round(farmingYieldBonusPct)}
+            onChange={(e) => {
+              const v = parseFloat(e.target.value)
+              if (!Number.isNaN(v)) {
+                onSetFarmingYieldBonusPct(v)
+              }
+            }}
+            className="w-16 rounded border border-gray-600 bg-gray-800 px-1.5 py-0.5 text-right text-gray-200 focus:border-blue-500 focus:outline-none"
+          />
+          <span>%</span>
+        </label>
+        <span className="text-[11px] text-gray-500">
+          These only affect crop plots (growth time, yield, and plots needed), not buff durations.
+        </span>
+      </div>
 
       {/* Derived recipe selectors: one per ingredient with multiple recipes (applies to all uses) */}
       {result.derivedRecipeChoices.length > 0 && (

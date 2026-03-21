@@ -94,6 +94,15 @@ export interface FarmingParams {
    * Optional stat metadata to resolve "Food Effects Duration" and extend buff lifetimes.
    */
   statMetadata?: Record<string, StatMetadataEntry>
+  /**
+   * Optional global farming growth speed bonus (%). For example, 10 means +10% faster growth.
+   * Affects crop plot growth time/yield calculations only (does not modify buff duration).
+   */
+  farmingGrowthBonusPct?: number
+  /**
+   * Optional global farming yield bonus (%). For example, 10 means +10% more units per harvest.
+   */
+  farmingYieldBonusPct?: number
 }
 
 
@@ -347,9 +356,17 @@ function walkIngredients(
  * Formula: ceil(required_units_per_hour / units_per_plot_per_hour)
  * where units_per_plot_per_hour = avg(harvest_min, harvest_max) / (growth_time / 3600)
  */
-function calcPlotsNeeded(acc: CropAcc): number {
+function calcPlotsNeeded(
+  acc: CropAcc,
+  growthBonusPct: number = 0,
+  yieldBonusPct: number = 0,
+): number {
   const avgHarvest = (acc.harvestMin + acc.harvestMax) / 2
-  const unitsPerPlotPerHour = avgHarvest / (acc.growthTime / 3600)
+  const growthMultiplier = 1 + growthBonusPct / 100
+  const yieldMultiplier = 1 + yieldBonusPct / 100
+  const effectiveAvgHarvest = avgHarvest * yieldMultiplier
+  const effectiveGrowthTime = acc.growthTime / growthMultiplier
+  const unitsPerPlotPerHour = effectiveAvgHarvest / (effectiveGrowthTime / 3600)
   if (unitsPerPlotPerHour <= 0) return 0
   return Math.ceil(acc.unitsPerHour / unitsPerPlotPerHour)
 }
@@ -373,12 +390,16 @@ export function computeFarmingResult(params: FarmingParams): FarmingResult {
   const durationKey = params.statMetadata
     ? getFoodEffectsDurationStatKey(params.statMetadata)
     : undefined
-  const durationBonusPct = sumFoodEffectsDurationBonus(
+  const durationBonusPctFromBuffs = sumFoodEffectsDurationBonus(
     params.loadoutItems,
     params.modifiers,
     durationKey,
   )
-  const durationMultiplier = 1 + durationBonusPct / 100
+  const farmingGrowthBonusPct = params.farmingGrowthBonusPct ?? 0
+  const farmingYieldBonusPct = params.farmingYieldBonusPct ?? 0
+
+  // Duration multiplier comes only from Food Effects Duration buffs.
+  const durationMultiplier = 1 + durationBonusPctFromBuffs / 100
 
   for (const item of params.loadoutItems) {
     const recipeId = getEffectiveRecipeId(item, params.itemsMap, params.recipeOverrides)
@@ -415,10 +436,10 @@ export function computeFarmingResult(params: FarmingParams): FarmingResult {
       name,
       display_name: acc.display_name,
       unitsPerHour: acc.unitsPerHour,
-      plotsNeeded: calcPlotsNeeded(acc),
-      growthTime: acc.growthTime,
-      harvestMin: acc.harvestMin,
-      harvestMax: acc.harvestMax,
+      plotsNeeded: calcPlotsNeeded(acc, farmingGrowthBonusPct, farmingYieldBonusPct),
+      growthTime: acc.growthTime / (1 + farmingGrowthBonusPct / 100),
+      harvestMin: acc.harvestMin * (1 + farmingYieldBonusPct / 100),
+      harvestMax: acc.harvestMax * (1 + farmingYieldBonusPct / 100),
     }))
     .sort((a, b) => b.plotsNeeded - a.plotsNeeded || a.display_name.localeCompare(b.display_name))
 

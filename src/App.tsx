@@ -76,10 +76,14 @@ export default function App(): React.JSX.Element {
     recipeOverrides,
     genericSelections,
     derivedRecipeOverrides,
+    farmingGrowthBonusPct,
+    farmingYieldBonusPct,
     setServingsOverride,
     setRecipeOverride,
     setGenericSelection,
     setDerivedRecipeOverride,
+    setFarmingGrowthBonusPct,
+    setFarmingYieldBonusPct,
   } = useFarmingState(farmingValidationContext)
 
   const [cardViewMode, setCardViewMode] = useState<'modifiers' | 'recipe'>('modifiers')
@@ -125,6 +129,8 @@ export default function App(): React.JSX.Element {
       genericSelections,
       derivedRecipeOverrides,
       statMetadata: data.stats,
+      farmingGrowthBonusPct,
+      farmingYieldBonusPct,
     })
   }, [
     data,
@@ -135,6 +141,8 @@ export default function App(): React.JSX.Element {
     recipeOverrides,
     genericSelections,
     derivedRecipeOverrides,
+    farmingGrowthBonusPct,
+    farmingYieldBonusPct,
   ])
 
   const relevantUrlContext = useMemo((): RelevantUrlContext => {
@@ -339,6 +347,8 @@ export default function App(): React.JSX.Element {
             filterState={{ ...filterState, sortKey: validSortKey }}
             selectedNames={selectedNames}
             blockedModIds={blockedModIds}
+          requirementsRegistry={requirementsRegistry}
+          featureNames={featureNames}
             featureColors={featureColors}
             missionColors={missionColors}
             onToggleItem={toggleItem}
@@ -375,10 +385,14 @@ export default function App(): React.JSX.Element {
             recipeOverrides={recipeOverrides}
             genericSelections={genericSelections}
             derivedRecipeOverrides={derivedRecipeOverrides}
+            farmingGrowthBonusPct={farmingGrowthBonusPct}
+            farmingYieldBonusPct={farmingYieldBonusPct}
             onSetServings={setServingsOverride}
             onSetRecipe={setRecipeOverride}
             onSetGeneric={setGenericSelection}
             onSetDerivedRecipe={setDerivedRecipeOverride}
+            onSetFarmingGrowthBonusPct={setFarmingGrowthBonusPct}
+            onSetFarmingYieldBonusPct={setFarmingYieldBonusPct}
           />
         </aside>
       </div>

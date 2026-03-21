@@ -6,6 +6,7 @@ import {
   formatBaseStatLabel,
   formatBuffLabel,
   formatRecipeLabel,
+  formatTalentLabel,
 } from '@/utils/formatters'
 import { getEffectiveRecipeId, getAvailableRecipeIds } from '@/utils/farmingCalc'
 import { getEffectiveTier } from '@/utils/requirements'
@@ -40,6 +41,10 @@ interface ConsumableCardProps {
   genericSelections: Record<string, string>
   /** Generic id -> Generic object. */
   genericsMap: Record<string, Generic>
+  /** Requirement ID -> display name; used for hover labels on icons. */
+  requirementsRegistry: Record<string, string>
+  /** Feature ID -> display name; used for DLC hover labels. */
+  featureNames: Record<string, string>
   /** Feature ID -> Tailwind colour class (order-based). */
   featureColors: Record<string, string>
   /** Mission ID -> Tailwind colour class (order-based). */
@@ -83,6 +88,8 @@ export function ConsumableCard({
   recipeOverrides,
   genericSelections,
   genericsMap,
+  requirementsRegistry,
+  featureNames,
   featureColors,
   missionColors,
   onSetRecipe,
@@ -127,6 +134,20 @@ export function ConsumableCard({
   /** Stop propagation so clicking a select does not toggle the card. */
   const stopProp = (e: React.MouseEvent) => e.stopPropagation()
 
+  const missionId = item.requirements?.mission
+  const missionLabel =
+    missionId !== undefined
+      ? requirementsRegistry[String(missionId)] ?? formatTalentLabel(String(missionId))
+      : undefined
+
+  const featureIds = item.requirements?.features ?? []
+  const featureLabel =
+    featureIds.length > 0
+      ? featureIds
+          .map((id) => featureNames[id] ?? id)
+          .join(', ')
+      : undefined
+
   return (
     <div
       role={notClickable ? undefined : 'button'}
@@ -156,21 +177,39 @@ export function ConsumableCard({
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
           {item.requirements?.workshop !== undefined && (
-            <Satellite size={14} className="mt-0.5 text-cyan-400" aria-label="Workshop" />
+            <span
+              className="inline-flex"
+              aria-label="Orbital Workshop"
+              title="Orbital Workshop"
+            >
+              <Satellite size={14} className="mt-0.5 text-cyan-400" aria-hidden />
+            </span>
           )}
-          {item.requirements?.mission !== undefined && (
-            <Flag
-              size={14}
-              className={`mt-0.5 ${getRequirementColour(String(item.requirements.mission), missionColors)}`}
-              aria-label="Mission required"
-            />
+          {missionId !== undefined && missionLabel !== undefined && (
+            <span
+              className="inline-flex"
+              aria-label={missionLabel}
+              title={missionLabel}
+            >
+              <Flag
+                size={14}
+                className={`mt-0.5 ${getRequirementColour(String(missionId), missionColors)}`}
+                aria-hidden
+              />
+            </span>
           )}
-          {item.requirements?.features !== undefined && item.requirements.features.length > 0 && (
-            <PackageOpen
-              size={14}
-              className={`mt-0.5 ${getRequirementColour(item.requirements.features[0]!, featureColors)}`}
-              aria-label={`DLC: ${item.requirements.features.join(', ')}`}
-            />
+          {featureIds.length > 0 && (
+            <span
+              className="inline-flex"
+              aria-label={featureLabel !== undefined ? `DLC: ${featureLabel}` : 'DLC requirement'}
+              title={featureLabel}
+            >
+              <PackageOpen
+                size={14}
+                className={`mt-0.5 ${getRequirementColour(featureIds[0]!, featureColors)}`}
+                aria-hidden
+              />
+            </span>
           )}
         </div>
       </div>
