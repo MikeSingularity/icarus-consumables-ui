@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import {
   computeFarmingResult,
   buildItemsMap,
@@ -11,6 +11,63 @@ import {
 } from '@/utils/farmingCalc'
 import { formatLifetime, formatRecipeLabel } from '@/utils/formatters'
 import type { Item, Recipe, Modifier, Generic, StatMetadataEntry } from '@/types/consumables'
+
+/**
+ * A controlled numeric input that manages its own string state internally
+ * to allow for a better typing experience (e.g. clearing the field or typing
+ * multi-digit numbers without jumping).
+ */
+function NumericInput({
+  value,
+  onChange,
+  className,
+  min,
+  max,
+  step,
+}: {
+  value: number
+  onChange: (v: number) => void
+  className: string
+  min?: number
+  max?: number
+  step?: string
+}) {
+  const [localValue, setLocalValue] = useState<string>(value.toString())
+  const [prevValue, setPrevValue] = useState<number>(value)
+
+  if (value !== prevValue) {
+    setPrevValue(value)
+    const parsedLocal = parseFloat(localValue)
+    if (isNaN(parsedLocal) || parsedLocal !== value) {
+      if (!(localValue === '' && value === 0)) {
+        setLocalValue(value.toString())
+      }
+    }
+  }
+
+  return (
+    <input
+      type="number"
+      min={min}
+      max={max}
+      step={step}
+      value={localValue}
+      onFocus={(e) => e.target.select()}
+      onChange={(e) => {
+        const val = e.target.value
+        setLocalValue(val)
+        const v = parseFloat(val)
+        if (!isNaN(v)) {
+          onChange(v)
+        } else {
+          // If empty, assume 0 for calculations but keep it empty in text
+          onChange(0)
+        }
+      }}
+      className={className}
+    />
+  )
+}
 
 interface FarmingPanelProps {
   selectedItems: Item[]
@@ -136,16 +193,12 @@ export function FarmingPanel({
                 {needsServings ? (
                   <label className="flex items-center gap-1.5 text-xs text-gray-400">
                     Servings/hr
-                    <input
-                      type="number"
-                      min="0.1"
+                    <NumericInput
+                      min={0.1}
                       step="0.5"
                       value={servingsOverrides[item.name] ?? 1}
-                      onChange={(e) => {
-                        const v = parseFloat(e.target.value)
-                        if (!isNaN(v) && v > 0) onSetServings(item.name, v)
-                      }}
-                      className="w-16 rounded border border-gray-600 bg-gray-800 px-1.5 py-0.5 text-right text-gray-200 focus:border-blue-500 focus:outline-none"
+                      onChange={(v) => onSetServings(item.name, v)}
+                      className="w-16 rounded border border-gray-600 bg-gray-800 px-1.5 py-0.5 text-right text-gray-200 focus:border-blue-500 focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                     />
                   </label>
                 ) : (
@@ -203,44 +256,36 @@ export function FarmingPanel({
       )}
 
       {/* Global farming modifiers (affect crop growth speed and yield) */}
-      <div className="mb-5 flex flex-wrap items-center gap-4 text-xs text-gray-400">
-        <label className="flex items-center gap-1.5">
+      <div className="mb-5 flex flex-col gap-2 text-xs text-gray-400">
+        <label className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2">
           Growth speed
-          <input
-            type="number"
-            step="5"
-            min={-90}
-            max={500}
-            value={Math.round(farmingGrowthBonusPct)}
-            onChange={(e) => {
-              const v = parseFloat(e.target.value)
-              if (!Number.isNaN(v)) {
-                onSetFarmingGrowthBonusPct(v)
-              }
-            }}
-            className="w-16 rounded border border-gray-600 bg-gray-800 px-1.5 py-0.5 text-right text-gray-200 focus:border-blue-500 focus:outline-none"
-          />
-          <span>%</span>
+          <div className="flex items-center gap-1.5">
+            <NumericInput
+              step="5"
+              min={-90}
+              max={500}
+              value={Math.round(farmingGrowthBonusPct)}
+              onChange={(v) => onSetFarmingGrowthBonusPct(v)}
+              className="w-16 rounded border border-gray-600 bg-gray-800 px-1.5 py-0.5 text-right text-gray-200 focus:border-blue-500 focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            />
+            <span>%</span>
+          </div>
         </label>
-        <label className="flex items-center gap-1.5">
+        <label className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2">
           Yield per harvest
-          <input
-            type="number"
-            step="5"
-            min={-90}
-            max={500}
-            value={Math.round(farmingYieldBonusPct)}
-            onChange={(e) => {
-              const v = parseFloat(e.target.value)
-              if (!Number.isNaN(v)) {
-                onSetFarmingYieldBonusPct(v)
-              }
-            }}
-            className="w-16 rounded border border-gray-600 bg-gray-800 px-1.5 py-0.5 text-right text-gray-200 focus:border-blue-500 focus:outline-none"
-          />
-          <span>%</span>
+          <div className="flex items-center gap-1.5">
+            <NumericInput
+              step="5"
+              min={-90}
+              max={500}
+              value={Math.round(farmingYieldBonusPct)}
+              onChange={(v) => onSetFarmingYieldBonusPct(v)}
+              className="w-16 rounded border border-gray-600 bg-gray-800 px-1.5 py-0.5 text-right text-gray-200 focus:border-blue-500 focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            />
+            <span>%</span>
+          </div>
         </label>
-        <span className="text-[11px] text-gray-500">
+        <span className="mt-1 text-[11px] text-gray-500">
           These only affect crop plots (growth time, yield, and plots needed), not buff durations.
         </span>
       </div>

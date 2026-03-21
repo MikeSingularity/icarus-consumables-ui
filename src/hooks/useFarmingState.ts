@@ -44,35 +44,37 @@ export function useFarmingState(validationContext: FarmingValidationContext | nu
   setFarmingYieldBonusPct: (bonusPct: number) => void
   resetFarmingState: () => void
 } {
-  const [state, setState] = useState<FarmingState>({
-    servingsOverrides: {},
-    recipeOverrides: {},
-    genericSelections: {},
-    derivedRecipeOverrides: {},
-    farmingGrowthBonusPct: 0,
-    farmingYieldBonusPct: 0,
-  })
+  const [state, setState] = useState<FarmingState>(() => {
+    const baseState: FarmingState = {
+      servingsOverrides: {},
+      recipeOverrides: {},
+      genericSelections: {},
+      derivedRecipeOverrides: {},
+      farmingGrowthBonusPct: 0,
+      farmingYieldBonusPct: 0,
+    }
 
-  // Restore global farming modifiers from localStorage (once on mount).
-  useEffect(() => {
-    if (typeof window === 'undefined') return
+    if (typeof window === 'undefined') return baseState
+
     try {
       const raw = window.localStorage.getItem(FARMING_GLOBALS_KEY)
-      if (!raw) return
-      const parsed = JSON.parse(raw) as Partial<
-        Pick<FarmingState, 'farmingGrowthBonusPct' | 'farmingYieldBonusPct'>
-      >
-      setState((prev) => ({
-        ...prev,
-        farmingGrowthBonusPct:
-          typeof parsed.farmingGrowthBonusPct === 'number' ? parsed.farmingGrowthBonusPct : prev.farmingGrowthBonusPct,
-        farmingYieldBonusPct:
-          typeof parsed.farmingYieldBonusPct === 'number' ? parsed.farmingYieldBonusPct : prev.farmingYieldBonusPct,
-      }))
+      if (raw) {
+        const parsed = JSON.parse(raw) as Partial<
+          Pick<FarmingState, 'farmingGrowthBonusPct' | 'farmingYieldBonusPct'>
+        >
+        if (typeof parsed.farmingGrowthBonusPct === 'number') {
+          baseState.farmingGrowthBonusPct = parsed.farmingGrowthBonusPct
+        }
+        if (typeof parsed.farmingYieldBonusPct === 'number') {
+          baseState.farmingYieldBonusPct = parsed.farmingYieldBonusPct
+        }
+      }
     } catch {
-      // Ignore malformed localStorage; fall back to defaults.
+      // Fallback to baseState
     }
-  }, [])
+
+    return baseState
+  })
 
   const hasRestoredFromUrl = useRef(false)
   useEffect(() => {
