@@ -59,14 +59,14 @@ Per-parent overrides (“use recipe B for flour only when used in chocolate cake
 
 Canonical URL is built from application state in `src/utils/urlState.ts`. Query parameters:
 
-| Param | Meaning | Format | Example |
-| --- | --- | --- | --- |
-| `i` | Loadout item names | Comma-separated | `i=crispybacon,chocolatecakepiece` |
-| `l` | Loadout slot count (1–5) | Integer | `l=4` |
-| `r` | Loadout recipe overrides | `itemName:recipeId` per entry, comma-separated | `r=crispybacon:Crispy_Bacon_Butter` |
-| `g` | Generic selections | `genericId:itemName` per entry, comma-separated | `g=Sugar:honey` |
-| `d` | Derived recipe overrides | `ingredientName:recipeId` per entry, comma-separated | `d=pastry:Pastry_Butter` |
-| `s` | Servings overrides | `itemName:number` per entry, comma-separated | `s=somefood:2.5` |
+| Param | Meaning                  | Format                                               | Example                             |
+| ----- | ------------------------ | ---------------------------------------------------- | ----------------------------------- |
+| `i`   | Loadout item names       | Comma-separated                                      | `i=crispybacon,chocolatecakepiece`  |
+| `l`   | Loadout slot count (1–5) | Integer                                              | `l=4`                               |
+| `r`   | Loadout recipe overrides | `itemName:recipeId` per entry, comma-separated       | `r=crispybacon:Crispy_Bacon_Butter` |
+| `g`   | Generic selections       | `genericId:itemName` per entry, comma-separated      | `g=Sugar:honey`                     |
+| `d`   | Derived recipe overrides | `ingredientName:recipeId` per entry, comma-separated | `d=pastry:Pastry_Butter`            |
+| `s`   | Servings overrides       | `itemName:number` per entry, comma-separated         | `s=somefood:2.5`                    |
 
 - **Delimiters:** Comma between entries; colon between key and value. If names ever contain colons, switch to another separator (e.g. `~`) and document.
 - **Encoding:** URL API decodes percent-encoded values. Other query params are preserved when updating these.
@@ -77,14 +77,14 @@ Canonical URL is built from application state in `src/utils/urlState.ts`. Query 
 
 ## 6. Implementation Reference
 
-| Area | Location |
-| --- | --- |
-| Card view mode state | `App.tsx`: `cardViewMode`, `setCardViewMode` |
-| Toggle UI | `FilterBar`: `cardViewMode`, `onCardViewModeChange` |
-| Recipe view on card | `ConsumableCard`: `viewMode === 'recipe'`, recipe/generic props |
-| Farming state and setters | `useFarmingState`: `recipeOverrides`, `genericSelections`, `derivedRecipeOverrides`, setters |
+| Area                      | Location                                                                                                                 |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Card view mode state      | `App.tsx`: `cardViewMode`, `setCardViewMode`                                                                             |
+| Toggle UI                 | `FilterBar`: `cardViewMode`, `onCardViewModeChange`                                                                      |
+| Recipe view on card       | `ConsumableCard`: `viewMode === 'recipe'`, recipe/generic props                                                          |
+| Farming state and setters | `useFarmingState`: `recipeOverrides`, `genericSelections`, `derivedRecipeOverrides`, setters                             |
 | Canonical URL build/parse | `src/utils/urlState.ts`: `buildCanonicalSearchString`, `parseFarmingParamsFromSearch`, `filterCanonicalParamsToRelevant` |
-| Recipe label formatting | `src/utils/formatters.ts`: `formatRecipeLabel` |
+| Recipe label formatting   | `src/utils/formatters.ts`: `formatRecipeLabel`                                                                           |
 
 ---
 

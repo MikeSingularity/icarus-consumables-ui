@@ -1,25 +1,26 @@
-import type { Item, Recipe, Modifier, Generic, StatMetadataEntry } from '@/types/consumables'
+import type { Item, Recipe, Modifier, Generic, StatMetadataEntry } from '@/types/consumables';
+import { isLeafNode } from './tagUtils';
 import type {
   CropPlotEntry,
   StockpileEntry,
   FarmingResult,
   GenericChoice,
   DerivedRecipeChoice,
-} from '@/types/ui'
+} from '@/types/ui';
 
 /** Display name used in stats metadata for the Food Effects Duration buff. */
-const FOOD_EFFECTS_DURATION_LABEL = 'Food Effects Duration'
+const FOOD_EFFECTS_DURATION_LABEL = 'Food Effects Duration';
 
 /**
  * Returns the stat key whose display_name is "Food Effects Duration", or undefined.
  */
 function getFoodEffectsDurationStatKey(
-  statMetadata: Record<string, StatMetadataEntry>,
+  statMetadata: Record<string, StatMetadataEntry>
 ): string | undefined {
   for (const [key, meta] of Object.entries(statMetadata)) {
-    if (meta.display_name === FOOD_EFFECTS_DURATION_LABEL) return key
+    if (meta.display_name === FOOD_EFFECTS_DURATION_LABEL) return key;
   }
-  return undefined
+  return undefined;
 }
 
 /**
@@ -29,16 +30,17 @@ function getFoodEffectsDurationStatKey(
 function sumFoodEffectsDurationBonus(
   loadoutItems: Item[],
   modifiers: Record<string, Modifier>,
-  durationKey: string | undefined,
+  durationKey: string | undefined
 ): number {
-  if (durationKey === undefined) return 0
-  let total = 0
+  if (durationKey === undefined) return 0;
+  let total = 0;
   for (const item of loadoutItems) {
-    if (item.modifiers.length === 0) continue
-    const mod = modifiers[item.modifiers[0]]
-    if (mod !== undefined) total += mod.stats[durationKey] ?? 0
+    const modifierIds = Object.keys(item.modifiers);
+    if (modifierIds.length === 0) continue;
+    const mod = modifiers[modifierIds[0]];
+    if (mod !== undefined) total += mod.stats[durationKey] ?? 0;
   }
-  return total
+  return total;
 }
 
 /**
@@ -49,11 +51,11 @@ function sumFoodEffectsDurationBonus(
 export function getDurationMultiplier(
   loadoutItems: Item[],
   modifiers: Record<string, Modifier>,
-  statMetadata: Record<string, StatMetadataEntry>,
+  statMetadata: Record<string, StatMetadataEntry>
 ): number {
-  const durationKey = getFoodEffectsDurationStatKey(statMetadata)
-  const bonusPct = sumFoodEffectsDurationBonus(loadoutItems, modifiers, durationKey)
-  return 1 + bonusPct / 100
+  const durationKey = getFoodEffectsDurationStatKey(statMetadata);
+  const bonusPct = sumFoodEffectsDurationBonus(loadoutItems, modifiers, durationKey);
+  return 1 + bonusPct / 100;
 }
 
 /**
@@ -61,64 +63,63 @@ export function getDurationMultiplier(
  */
 export interface FarmingParams {
   /** The items currently selected in the loadout. */
-  loadoutItems: Item[]
+  loadoutItems: Item[];
   /** Full item name→Item lookup (all categories, not just Food). */
-  itemsMap: Record<string, Item>
+  itemsMap: Record<string, Item>;
   /** Full recipes dict from data. */
-  recipes: Record<string, Recipe>
+  recipes: Record<string, Recipe>;
   /** Full modifiers dict from data. */
-  modifiers: Record<string, Modifier>
+  modifiers: Record<string, Modifier>;
   /** Generic tag ID → Generic object. */
-  genericsMap: Record<string, Generic>
+  genericsMap: Record<string, Generic>;
   /**
    * Player-configured servings/hour for items with no timed modifier.
    * Falls back to 1 for items not present in this map.
    */
-  servingsOverrides: Record<string, number>
+  servingsOverrides: Record<string, number>;
   /**
    * Player-chosen recipe ID per loadout item (item.name → recipe ID).
    * Falls back to the item's (or source item's) first recipe.
    */
-  recipeOverrides: Record<string, string>
+  recipeOverrides: Record<string, string>;
   /**
    * Player-chosen specific item per generic ingredient (genericId → item name).
    * Falls back to the first option when not set.
    */
-  genericSelections: Record<string, string>
+  genericSelections: Record<string, string>;
   /**
    * Player-chosen recipe ID per ingredient name for derived ingredients (one choice per ingredient).
    * Key: ingredientName. Falls back to the ingredient's first recipe when not set.
    */
-  derivedRecipeOverrides?: Record<string, string>
+  derivedRecipeOverrides?: Record<string, string>;
   /**
    * Optional stat metadata to resolve "Food Effects Duration" and extend buff lifetimes.
    */
-  statMetadata?: Record<string, StatMetadataEntry>
+  statMetadata?: Record<string, StatMetadataEntry>;
   /**
    * Optional global farming growth speed bonus (%). For example, 10 means +10% faster growth.
    * Affects crop plot growth time/yield calculations only (does not modify buff duration).
    */
-  farmingGrowthBonusPct?: number
+  farmingGrowthBonusPct?: number;
   /**
    * Optional global farming yield bonus (%). For example, 10 means +10% more units per harvest.
    */
-  farmingYieldBonusPct?: number
+  farmingYieldBonusPct?: number;
 }
-
 
 /**
  * Converts the generics array (from data.generics) into a lookup dict
  * keyed by generic tag ID.
  */
 export function buildGenericsMap(generics: Generic[]): Record<string, Generic> {
-  return Object.fromEntries(generics.map((g) => [g.id, g]))
+  return Object.fromEntries(generics.map((g) => [g.id, g]));
 }
 
 /**
- * Converts the items array into a name→Item lookup for O(1) access.
+ * @deprecated Items are now provided as a Map (Record<string, Item>) from the data hook.
  */
 export function buildItemsMap(items: Item[]): Record<string, Item> {
-  return Object.fromEntries(items.map((item) => [item.name, item]))
+  return Object.fromEntries(items.map((item) => [item.id, item]));
 }
 
 /**
@@ -130,8 +131,11 @@ export function buildItemsMap(items: Item[]): Record<string, Item> {
  * - Its first modifier has lifetime === 0 (instant/permanent effect)
  */
 export function needsServingsOverride(item: Item, modifiers: Record<string, Modifier>): boolean {
-  const mod = item.modifiers.length > 0 ? modifiers[item.modifiers[0]] : undefined
-  return mod === undefined || mod.lifetime === 0
+  const modifierIds = Object.keys(item.modifiers);
+  const modId = modifierIds[0];
+  const mod = modId !== undefined ? modifiers[modId] : undefined;
+  const lifetime = modId !== undefined ? item.modifiers[modId] : 0;
+  return mod === undefined || lifetime === 0;
 }
 
 /**
@@ -145,14 +149,17 @@ export function getItemsPerHour(
   item: Item,
   modifiers: Record<string, Modifier>,
   servingsOverrides: Record<string, number>,
-  durationMultiplier: number = 1,
+  durationMultiplier: number = 1
 ): number {
-  const mod = item.modifiers.length > 0 ? modifiers[item.modifiers[0]] : undefined
-  if (mod !== undefined && mod.lifetime > 0) {
-    const effectiveLifetime = mod.lifetime * durationMultiplier
-    return 3600 / effectiveLifetime
+  const modifierIds = Object.keys(item.modifiers);
+  const modId = modifierIds[0];
+  const mod = modId !== undefined ? modifiers[modId] : undefined;
+  const lifetime = modId !== undefined ? item.modifiers[modId] : 0;
+  if (mod !== undefined && lifetime > 0) {
+    const effectiveLifetime = lifetime * durationMultiplier;
+    return 3600 / effectiveLifetime;
   }
-  return servingsOverrides[item.name] ?? 1
+  return servingsOverrides[item.id] ?? 1;
 }
 
 /**
@@ -161,11 +168,11 @@ export function getItemsPerHour(
  */
 export function getRecipeYieldCount(itemName: string, recipe: Recipe): number {
   for (const output of recipe.outputs) {
-    if (output.name === itemName) {
-      return Math.max(1, output.yields_count)
+    if (output.id === itemName) {
+      return Math.max(1, output.count);
     }
   }
-  return 1
+  return 1;
 }
 
 /**
@@ -181,20 +188,20 @@ export function getRecipeYieldCount(itemName: string, recipe: Recipe): number {
 export function getEffectiveRecipeId(
   item: Item,
   itemsMap: Record<string, Item>,
-  recipeOverrides: Record<string, string>,
+  recipeOverrides: Record<string, string>
 ): string | undefined {
-  const override = recipeOverrides[item.name]
-  if (override !== undefined) return override
+  const override = recipeOverrides[item.id];
+  if (override !== undefined) return override;
 
   // Prefer the item's own recipes (true for pieces like chocolatecakepiece)
-  if (item.recipes.length > 0) return item.recipes[0]
+  if (item.recipes.length > 0) return item.recipes[0];
 
   // Fallback: use the parent item's first recipe when the piece has none
   if (item.source_item !== undefined) {
-    return itemsMap[item.source_item]?.recipes[0]
+    return itemsMap[item.source_item]?.recipes[0];
   }
 
-  return undefined
+  return undefined;
 }
 
 /**
@@ -203,26 +210,26 @@ export function getEffectiveRecipeId(
  * for source_item pieces that have no recipe of their own.
  */
 export function getAvailableRecipeIds(item: Item, itemsMap: Record<string, Item>): string[] {
-  if (item.recipes.length > 0) return item.recipes
+  if (item.recipes.length > 0) return item.recipes;
   if (item.source_item !== undefined) {
-    return itemsMap[item.source_item]?.recipes ?? []
+    return itemsMap[item.source_item]?.recipes ?? [];
   }
-  return []
+  return [];
 }
 
 // ---- Internal accumulator types ----
 
 interface CropAcc {
-  display_name: string
-  unitsPerHour: number
-  growthTime: number
-  harvestMin: number
-  harvestMax: number
+  display_name: string;
+  unitsPerHour: number;
+  growthTime: number;
+  harvestMin: number;
+  harvestMax: number;
 }
 
 interface StockpileAcc {
-  display_name: string
-  unitsPerHour: number
+  display_name: string;
+  unitsPerHour: number;
 }
 
 /**
@@ -239,112 +246,120 @@ function walkIngredients(
   stockpileAcc: Map<string, StockpileAcc>,
   collectedGenerics: Map<string, GenericChoice>,
   collectedDerived: Map<string, DerivedRecipeChoice>,
-  depth: number,
+  depth: number
 ): void {
-  if (depth > 8) return
+  if (depth > 8) return;
 
-  const recipe = params.recipes[recipeId]
-  if (recipe === undefined) return
+  const recipe = params.recipes[recipeId];
+  if (recipe === undefined) return;
 
   for (const input of recipe.inputs) {
-    const unitsPerHour = craftsPerHour * input.count
-    let ingredientName = input.name
-    let ingredientDisplayName = input.display_name
+    const unitsPerHour = craftsPerHour * input.count;
+    let ingredientName = input.id;
+    let ingredientDisplayName = input.display_name;
 
     if (input.is_generic) {
-      const generic = params.genericsMap[input.name]
-      const options = generic?.items ?? []
-      const selected = params.genericSelections[input.name] ?? options[0]
+      const generic = params.genericsMap[input.id];
+      const options = generic?.items ?? [];
+      const selected = params.genericSelections[input.id] ?? options[0];
 
       // Record this generic for the UI to show a selector, unless it's a leaf
-      if (!collectedGenerics.has(input.name) && options.length > 0 && !generic?.is_leaf) {
-        collectedGenerics.set(input.name, {
-          genericId: input.name,
-          displayName: generic?.display_name ?? input.name.replace(/_/g, ' '),
+      if (!collectedGenerics.has(input.id) && options.length > 0 && !generic?.is_leaf) {
+        collectedGenerics.set(input.id, {
+          genericId: input.id,
+          displayName: generic?.display_name ?? input.id.replace(/_/g, ' '),
           options,
-        })
+        });
       }
 
       // If the generic is marked as a leaf, stop recursion and add to stockpile
       if (generic?.is_leaf) {
-        const existing = stockpileAcc.get(input.name)
+        const existing = stockpileAcc.get(input.id);
         if (existing !== undefined) {
-          existing.unitsPerHour += unitsPerHour
+          existing.unitsPerHour += unitsPerHour;
         } else {
-          stockpileAcc.set(input.name, {
+          stockpileAcc.set(input.id, {
             display_name: generic.display_name,
             unitsPerHour,
-          })
+          });
         }
-        continue
+        continue;
       }
 
-      if (selected === undefined) continue
-      ingredientName = selected
-      const item = params.itemsMap[ingredientName]
-      ingredientDisplayName = item?.display_name ?? selected
+      if (selected === undefined) continue;
+      ingredientName = selected as string;
+      const item = params.itemsMap[ingredientName];
+      ingredientDisplayName = item?.display_name ?? (selected as string).replace(/_/g, ' ');
     }
 
-    const ingredientItem = params.itemsMap[ingredientName]
+    const ingredientItem = params.itemsMap[ingredientName];
+    if (!ingredientDisplayName && ingredientItem) {
+      ingredientDisplayName = ingredientItem.display_name;
+    }
 
     // Recurse if this ingredient has a crafting sub-recipe.
-    // Skip recursion for harvested items (is_harvested: true) — those are obtained by
-    // hunting/gathering and should appear as stockpile leaves rather than be decomposed
-    // into their carcass/source inputs.
+    // Skip recursion for leaf nodes (harvested items or containers).
     const availableRecipeIds = ingredientItem
       ? getAvailableRecipeIds(ingredientItem, params.itemsMap)
-      : []
-    const overrideRecipeId = params.derivedRecipeOverrides?.[ingredientName]
+      : [];
+    const overrideRecipeId = params.derivedRecipeOverrides?.[ingredientName as string];
     const subRecipeId =
       overrideRecipeId !== undefined && availableRecipeIds.includes(overrideRecipeId)
         ? overrideRecipeId
-        : availableRecipeIds[0]
-    const subRecipe = subRecipeId !== undefined ? params.recipes[subRecipeId] : undefined
+        : availableRecipeIds[0];
+    const subRecipe = subRecipeId !== undefined ? params.recipes[subRecipeId] : undefined;
 
-    if (subRecipe !== undefined && ingredientItem !== undefined && !ingredientItem.traits?.is_harvested) {
-      if (availableRecipeIds.length > 1 && !collectedDerived.has(ingredientName)) {
-        collectedDerived.set(ingredientName, {
-          ingredientName,
-          ingredientDisplayName,
+    if (
+      subRecipe !== undefined &&
+      subRecipeId !== undefined &&
+      ingredientName !== undefined &&
+      ingredientItem !== undefined &&
+      !isLeafNode(ingredientItem)
+    ) {
+      if (availableRecipeIds.length > 1 && !collectedDerived.has(ingredientName as string)) {
+        collectedDerived.set(ingredientName as string, {
+          ingredientName: ingredientName as string,
+          ingredientDisplayName:
+            ingredientDisplayName ?? (ingredientName as string).replace(/_/g, ' '),
           recipeIds: availableRecipeIds,
-        })
+        });
       }
-      const yieldCount = getRecipeYieldCount(ingredientName, subRecipe)
+      const yieldCount = getRecipeYieldCount(ingredientName as string, subRecipe);
       walkIngredients(
-        subRecipeId,
+        subRecipeId as string,
         unitsPerHour / yieldCount,
         params,
         cropAcc,
         stockpileAcc,
         collectedGenerics,
         collectedDerived,
-        depth + 1,
-      )
-    } else {
+        depth + 1
+      );
+    } else if (ingredientName !== undefined) {
       // Leaf ingredient — classify as farmable or stockpile
       if (ingredientItem?.growth_data !== undefined) {
-        const { growth_time, harvest_min, harvest_max } = ingredientItem.growth_data
-        const existing = cropAcc.get(ingredientName)
+        const { growth_time, harvest_min, harvest_max } = ingredientItem.growth_data;
+        const existing = cropAcc.get(ingredientName as string);
         if (existing !== undefined) {
-          existing.unitsPerHour += unitsPerHour
+          existing.unitsPerHour += unitsPerHour;
         } else {
-          cropAcc.set(ingredientName, {
-            display_name: ingredientDisplayName,
+          cropAcc.set(ingredientName as string, {
+            display_name: ingredientDisplayName ?? (ingredientName as string).replace(/_/g, ' '),
             unitsPerHour,
             growthTime: growth_time,
             harvestMin: harvest_min,
             harvestMax: harvest_max,
-          })
+          });
         }
       } else {
-        const existing = stockpileAcc.get(ingredientName)
+        const existing = stockpileAcc.get(ingredientName as string);
         if (existing !== undefined) {
-          existing.unitsPerHour += unitsPerHour
+          existing.unitsPerHour += unitsPerHour;
         } else {
-          stockpileAcc.set(ingredientName, {
-            display_name: ingredientDisplayName,
+          stockpileAcc.set(ingredientName as string, {
+            display_name: ingredientDisplayName ?? (ingredientName as string).replace(/_/g, ' '),
             unitsPerHour,
-          })
+          });
         }
       }
     }
@@ -359,16 +374,16 @@ function walkIngredients(
 function calcPlotsNeeded(
   acc: CropAcc,
   growthBonusPct: number = 0,
-  yieldBonusPct: number = 0,
+  yieldBonusPct: number = 0
 ): number {
-  const avgHarvest = (acc.harvestMin + acc.harvestMax) / 2
-  const growthMultiplier = 1 + growthBonusPct / 100
-  const yieldMultiplier = 1 + yieldBonusPct / 100
-  const effectiveAvgHarvest = avgHarvest * yieldMultiplier
-  const effectiveGrowthTime = acc.growthTime / growthMultiplier
-  const unitsPerPlotPerHour = effectiveAvgHarvest / (effectiveGrowthTime / 3600)
-  if (unitsPerPlotPerHour <= 0) return 0
-  return Math.ceil(acc.unitsPerHour / unitsPerPlotPerHour)
+  const avgHarvest = (acc.harvestMin + acc.harvestMax) / 2;
+  const growthMultiplier = 1 + growthBonusPct / 100;
+  const yieldMultiplier = 1 + yieldBonusPct / 100;
+  const effectiveAvgHarvest = avgHarvest * yieldMultiplier;
+  const effectiveGrowthTime = acc.growthTime / growthMultiplier;
+  const unitsPerPlotPerHour = effectiveAvgHarvest / (effectiveGrowthTime / 3600);
+  if (unitsPerPlotPerHour <= 0) return 0;
+  return Math.ceil(acc.unitsPerHour / unitsPerPlotPerHour);
 }
 
 /**
@@ -382,42 +397,65 @@ function calcPlotsNeeded(
  * Items with no recipe are silently skipped (they have no ingredients to resolve).
  */
 export function computeFarmingResult(params: FarmingParams): FarmingResult {
-  const cropAcc = new Map<string, CropAcc>()
-  const stockpileAcc = new Map<string, StockpileAcc>()
-  const collectedGenerics = new Map<string, GenericChoice>()
-  const collectedDerived = new Map<string, DerivedRecipeChoice>()
+  const cropAcc = new Map<string, CropAcc>();
+  const stockpileAcc = new Map<string, StockpileAcc>();
+  const collectedGenerics = new Map<string, GenericChoice>();
+  const collectedDerived = new Map<string, DerivedRecipeChoice>();
 
   const durationKey = params.statMetadata
     ? getFoodEffectsDurationStatKey(params.statMetadata)
-    : undefined
+    : undefined;
   const durationBonusPctFromBuffs = sumFoodEffectsDurationBonus(
     params.loadoutItems,
     params.modifiers,
-    durationKey,
-  )
-  const farmingGrowthBonusPct = params.farmingGrowthBonusPct ?? 0
-  const farmingYieldBonusPct = params.farmingYieldBonusPct ?? 0
+    durationKey
+  );
+  const farmingGrowthBonusPct = params.farmingGrowthBonusPct ?? 0;
+  const farmingYieldBonusPct = params.farmingYieldBonusPct ?? 0;
 
   // Duration multiplier comes only from Food Effects Duration buffs.
-  const durationMultiplier = 1 + durationBonusPctFromBuffs / 100
+  const durationMultiplier = 1 + durationBonusPctFromBuffs / 100;
 
   for (const item of params.loadoutItems) {
-    const recipeId = getEffectiveRecipeId(item, params.itemsMap, params.recipeOverrides)
-    if (recipeId === undefined) continue
+    const recipeId = getEffectiveRecipeId(item, params.itemsMap, params.recipeOverrides);
+    if (recipeId === undefined) {
+      // Support raw farmable items with no recipe
+      if (item.growth_data !== undefined) {
+        const itemsPerHour = getItemsPerHour(
+          item,
+          params.modifiers,
+          params.servingsOverrides,
+          durationMultiplier
+        );
+        const existing = cropAcc.get(item.id);
+        if (existing !== undefined) {
+          existing.unitsPerHour += itemsPerHour;
+        } else {
+          cropAcc.set(item.id, {
+            display_name: item.display_name,
+            unitsPerHour: itemsPerHour,
+            growthTime: item.growth_data.growth_time,
+            harvestMin: item.growth_data.harvest_min,
+            harvestMax: item.growth_data.harvest_max,
+          });
+        }
+      }
+      continue;
+    }
 
-    const recipe = params.recipes[recipeId]
-    if (recipe === undefined) continue
+    const recipe = params.recipes[recipeId];
+    if (recipe === undefined) continue;
 
     const itemsPerHour = getItemsPerHour(
       item,
       params.modifiers,
       params.servingsOverrides,
-      durationMultiplier,
-    )
+      durationMultiplier
+    );
 
     // Items may be crafted in batches — scale crafting rate by output yield.
-    const yieldCount = getRecipeYieldCount(item.name, recipe)
-    const craftsPerHour = itemsPerHour / yieldCount
+    const yieldCount = getRecipeYieldCount(item.id, recipe);
+    const craftsPerHour = itemsPerHour / yieldCount;
 
     walkIngredients(
       recipeId,
@@ -427,13 +465,13 @@ export function computeFarmingResult(params: FarmingParams): FarmingResult {
       stockpileAcc,
       collectedGenerics,
       collectedDerived,
-      0,
-    )
+      0
+    );
   }
 
   const cropPlots: CropPlotEntry[] = Array.from(cropAcc.entries())
-    .map(([name, acc]) => ({
-      name,
+    .map(([id, acc]) => ({
+      id,
       display_name: acc.display_name,
       unitsPerHour: acc.unitsPerHour,
       plotsNeeded: calcPlotsNeeded(acc, farmingGrowthBonusPct, farmingYieldBonusPct),
@@ -441,24 +479,26 @@ export function computeFarmingResult(params: FarmingParams): FarmingResult {
       harvestMin: acc.harvestMin * (1 + farmingYieldBonusPct / 100),
       harvestMax: acc.harvestMax * (1 + farmingYieldBonusPct / 100),
     }))
-    .sort((a, b) => b.plotsNeeded - a.plotsNeeded || a.display_name.localeCompare(b.display_name))
+    .sort((a, b) => b.plotsNeeded - a.plotsNeeded || a.display_name.localeCompare(b.display_name));
 
   const stockpile: StockpileEntry[] = Array.from(stockpileAcc.entries())
-    .map(([name, acc]) => ({
-      name,
+    .map(([id, acc]) => ({
+      id,
       display_name: acc.display_name,
       unitsPerHour: acc.unitsPerHour,
     }))
-    .sort((a, b) => b.unitsPerHour - a.unitsPerHour || a.display_name.localeCompare(b.display_name))
+    .sort(
+      (a, b) => b.unitsPerHour - a.unitsPerHour || a.display_name.localeCompare(b.display_name)
+    );
 
   const derivedRecipeChoices = Array.from(collectedDerived.values()).sort((a, b) =>
-    a.ingredientDisplayName.localeCompare(b.ingredientDisplayName),
-  )
+    a.ingredientDisplayName.localeCompare(b.ingredientDisplayName)
+  );
 
   return {
     cropPlots,
     stockpile,
     genericChoices: Array.from(collectedGenerics.values()),
     derivedRecipeChoices,
-  }
+  };
 }

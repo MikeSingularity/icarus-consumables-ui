@@ -1,0 +1,13 @@
+repos:
+  - repo: local
+    hooks:
+      - id: linting
+        name: linting
+        entry: scripts/lint.sh --pre-commit
+        language: system
+        pass_filenames: false
+      - id: testing
+        name: testing
+        entry: scripts/test.sh --pre-commit
+        language: system
+        pass_filenames: false

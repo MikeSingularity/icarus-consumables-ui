@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   parseFarmingParamsFromUrl,
   validateFarmingParams,
   type FarmingValidationContext,
-} from '@/utils/urlState'
+} from '@/utils/urlState';
 
-const FARMING_GLOBALS_KEY = 'icarus_farming_globals_v1'
+const FARMING_GLOBALS_KEY = 'icarus_farming_globals_v1';
 
 /**
  * State for the farming calculator user-configurable inputs.
@@ -19,30 +19,30 @@ const FARMING_GLOBALS_KEY = 'icarus_farming_globals_v1'
  * once and merges validated entries into state.
  */
 interface FarmingState {
-  servingsOverrides: Record<string, number>
-  recipeOverrides: Record<string, string>
-  genericSelections: Record<string, string>
-  derivedRecipeOverrides: Record<string, string>
+  servingsOverrides: Record<string, number>;
+  recipeOverrides: Record<string, string>;
+  genericSelections: Record<string, string>;
+  derivedRecipeOverrides: Record<string, string>;
   /** Global farming growth speed bonus in percent (e.g. 10 for +10%). */
-  farmingGrowthBonusPct: number
+  farmingGrowthBonusPct: number;
   /** Global farming yield bonus in percent (e.g. 10 for +10%). */
-  farmingYieldBonusPct: number
+  farmingYieldBonusPct: number;
 }
 
 export function useFarmingState(validationContext: FarmingValidationContext | null = null): {
-  servingsOverrides: Record<string, number>
-  recipeOverrides: Record<string, string>
-  genericSelections: Record<string, string>
-  derivedRecipeOverrides: Record<string, string>
-  farmingGrowthBonusPct: number
-  farmingYieldBonusPct: number
-  setServingsOverride: (itemName: string, value: number) => void
-  setRecipeOverride: (itemName: string, recipeId: string) => void
-  setGenericSelection: (genericId: string, itemName: string) => void
-  setDerivedRecipeOverride: (ingredientName: string, recipeId: string) => void
-  setFarmingGrowthBonusPct: (bonusPct: number) => void
-  setFarmingYieldBonusPct: (bonusPct: number) => void
-  resetFarmingState: () => void
+  servingsOverrides: Record<string, number>;
+  recipeOverrides: Record<string, string>;
+  genericSelections: Record<string, string>;
+  derivedRecipeOverrides: Record<string, string>;
+  farmingGrowthBonusPct: number;
+  farmingYieldBonusPct: number;
+  setServingsOverride: (itemName: string, value: number) => void;
+  setRecipeOverride: (itemName: string, recipeId: string) => void;
+  setGenericSelection: (genericId: string, itemName: string) => void;
+  setDerivedRecipeOverride: (ingredientName: string, recipeId: string) => void;
+  setFarmingGrowthBonusPct: (bonusPct: number) => void;
+  setFarmingYieldBonusPct: (bonusPct: number) => void;
+  resetFarmingState: () => void;
 } {
   const [state, setState] = useState<FarmingState>(() => {
     const baseState: FarmingState = {
@@ -52,42 +52,42 @@ export function useFarmingState(validationContext: FarmingValidationContext | nu
       derivedRecipeOverrides: {},
       farmingGrowthBonusPct: 0,
       farmingYieldBonusPct: 0,
-    }
+    };
 
-    if (typeof window === 'undefined') return baseState
+    if (typeof window === 'undefined') return baseState;
 
     try {
-      const raw = window.localStorage.getItem(FARMING_GLOBALS_KEY)
+      const raw = window.localStorage.getItem(FARMING_GLOBALS_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as Partial<
           Pick<FarmingState, 'farmingGrowthBonusPct' | 'farmingYieldBonusPct'>
-        >
+        >;
         if (typeof parsed.farmingGrowthBonusPct === 'number') {
-          baseState.farmingGrowthBonusPct = parsed.farmingGrowthBonusPct
+          baseState.farmingGrowthBonusPct = parsed.farmingGrowthBonusPct;
         }
         if (typeof parsed.farmingYieldBonusPct === 'number') {
-          baseState.farmingYieldBonusPct = parsed.farmingYieldBonusPct
+          baseState.farmingYieldBonusPct = parsed.farmingYieldBonusPct;
         }
       }
     } catch {
       // Fallback to baseState
     }
 
-    return baseState
-  })
+    return baseState;
+  });
 
-  const hasRestoredFromUrl = useRef(false)
+  const hasRestoredFromUrl = useRef(false);
   useEffect(() => {
-    if (validationContext === null || hasRestoredFromUrl.current) return
-    hasRestoredFromUrl.current = true
-    const parsed = parseFarmingParamsFromUrl()
-    const validated = validateFarmingParams(parsed, validationContext)
+    if (validationContext === null || hasRestoredFromUrl.current) return;
+    hasRestoredFromUrl.current = true;
+    const parsed = parseFarmingParamsFromUrl();
+    const validated = validateFarmingParams(parsed, validationContext);
     const hasAny =
       Object.keys(validated.recipeOverrides).length > 0 ||
       Object.keys(validated.genericSelections).length > 0 ||
       Object.keys(validated.derivedRecipeOverrides).length > 0 ||
-      Object.keys(validated.servingsOverrides).length > 0
-    if (!hasAny) return
+      Object.keys(validated.servingsOverrides).length > 0;
+    if (!hasAny) return;
     queueMicrotask(() => {
       setState((prev) => ({
         ...prev,
@@ -98,37 +98,37 @@ export function useFarmingState(validationContext: FarmingValidationContext | nu
           ...validated.derivedRecipeOverrides,
         },
         servingsOverrides: { ...prev.servingsOverrides, ...validated.servingsOverrides },
-      }))
-    })
-  }, [validationContext])
+      }));
+    });
+  }, [validationContext]);
 
   const setServingsOverride = useCallback((itemName: string, value: number) => {
     setState((prev) => ({
       ...prev,
       servingsOverrides: { ...prev.servingsOverrides, [itemName]: Math.max(0.1, value) },
-    }))
-  }, [])
+    }));
+  }, []);
 
   const setRecipeOverride = useCallback((itemName: string, recipeId: string) => {
     setState((prev) => ({
       ...prev,
       recipeOverrides: { ...prev.recipeOverrides, [itemName]: recipeId },
-    }))
-  }, [])
+    }));
+  }, []);
 
   const setGenericSelection = useCallback((genericId: string, itemName: string) => {
     setState((prev) => ({
       ...prev,
       genericSelections: { ...prev.genericSelections, [genericId]: itemName },
-    }))
-  }, [])
+    }));
+  }, []);
 
   const setDerivedRecipeOverride = useCallback((ingredientName: string, recipeId: string) => {
     setState((prev) => ({
       ...prev,
       derivedRecipeOverrides: { ...prev.derivedRecipeOverrides, [ingredientName]: recipeId },
-    }))
-  }, [])
+    }));
+  }, []);
 
   const resetFarmingState = useCallback(() => {
     setState({
@@ -138,36 +138,36 @@ export function useFarmingState(validationContext: FarmingValidationContext | nu
       derivedRecipeOverrides: {},
       farmingGrowthBonusPct: 0,
       farmingYieldBonusPct: 0,
-    })
-  }, [])
+    });
+  }, []);
 
   const setFarmingGrowthBonusPct = useCallback((bonusPct: number) => {
     setState((prev) => ({
       ...prev,
       farmingGrowthBonusPct: bonusPct,
-    }))
-  }, [])
+    }));
+  }, []);
 
   const setFarmingYieldBonusPct = useCallback((bonusPct: number) => {
     setState((prev) => ({
       ...prev,
       farmingYieldBonusPct: bonusPct,
-    }))
-  }, [])
+    }));
+  }, []);
 
   // Persist global farming modifiers to localStorage whenever they change.
   useEffect(() => {
-    if (typeof window === 'undefined') return
+    if (typeof window === 'undefined') return;
     try {
       const payload = {
         farmingGrowthBonusPct: state.farmingGrowthBonusPct,
         farmingYieldBonusPct: state.farmingYieldBonusPct,
-      }
-      window.localStorage.setItem(FARMING_GLOBALS_KEY, JSON.stringify(payload))
+      };
+      window.localStorage.setItem(FARMING_GLOBALS_KEY, JSON.stringify(payload));
     } catch {
       // Ignore storage errors (e.g. quota, privacy mode).
     }
-  }, [state.farmingGrowthBonusPct, state.farmingYieldBonusPct])
+  }, [state.farmingGrowthBonusPct, state.farmingYieldBonusPct]);
 
   return {
     servingsOverrides: state.servingsOverrides,
@@ -183,5 +183,5 @@ export function useFarmingState(validationContext: FarmingValidationContext | nu
     setFarmingGrowthBonusPct,
     setFarmingYieldBonusPct,
     resetFarmingState,
-  }
+  };
 }

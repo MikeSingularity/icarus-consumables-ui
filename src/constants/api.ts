@@ -7,4 +7,4 @@
  */
 export const DATA_URL: string =
   import.meta.env.VITE_DATA_URL ??
-  'https://mikesingularity.github.io/icarus-consumables-data/icarus_consumables.min.json'
+  'https://mikesingularity.github.io/icarus-consumables-data/icarus_consumables.min.json';

@@ -1,31 +1,31 @@
-import { ConsumableCard } from './ConsumableCard'
-import { sortItems } from '@/utils/sortItems'
-import { getEffectiveTier } from '@/utils/requirements'
-import type { Item, Modifier, Recipe, StatMetadataEntry, Generic } from '@/types/consumables'
-import type { FilterState } from '@/hooks/useFilterState'
+import { ConsumableCard } from './ConsumableCard';
+import { sortItems } from '@/utils/sortItems';
+import { getEffectiveTier } from '@/utils/requirements';
+import type { Item, Modifier, Recipe, StatMetadataEntry, Generic } from '@/types/consumables';
+import type { FilterState } from '@/hooks/useFilterState';
 
 interface ConsumableGridProps {
-  items: Item[]
-  modifiers: Record<string, Modifier>
-  recipes: Record<string, Recipe>
-  statMetadata: Record<string, StatMetadataEntry>
-  filterState: FilterState
-  selectedNames: Set<string>
-  blockedModIds: Set<string>
+  items: Item[];
+  modifiers: Record<string, Modifier>;
+  recipes: Record<string, Recipe>;
+  statMetadata: Record<string, StatMetadataEntry>;
+  filterState: FilterState;
+  selectedNames: Set<string>;
+  blockedModIds: Set<string>;
   /** Requirement ID -> display name; used for hover labels on icons. */
-  requirementsRegistry: Record<string, string>
+  requirementsRegistry: Record<string, string>;
   /** Feature ID -> display name; used for DLC hover labels. */
-  featureNames: Record<string, string>
-  featureColors: Record<string, string>
-  missionColors: Record<string, string>
-  onToggleItem: (item: Item) => void
-  cardViewMode: 'modifiers' | 'recipe'
-  itemsMap: Record<string, Item>
-  recipeOverrides: Record<string, string>
-  genericSelections: Record<string, string>
-  genericsMap: Record<string, Generic>
-  onSetRecipe: (itemName: string, recipeId: string) => void
-  onSetGeneric: (genericId: string, itemName: string) => void
+  featureNames: Record<string, string>;
+  featureColors: Record<string, string>;
+  missionColors: Record<string, string>;
+  onToggleItem: (item: Item) => void;
+  cardViewMode: 'modifiers' | 'recipe';
+  itemsMap: Record<string, Item>;
+  recipeOverrides: Record<string, string>;
+  genericSelections: Record<string, string>;
+  genericsMap: Record<string, Generic>;
+  onSetRecipe: (itemName: string, recipeId: string) => void;
+  onSetGeneric: (genericId: string, itemName: string) => void;
 }
 
 /**
@@ -54,24 +54,31 @@ export default function ConsumableGrid({
   onSetRecipe,
   onSetGeneric,
 }: ConsumableGridProps): React.JSX.Element {
-  const { tier, sortKey, disabledTalents, disabledFeatures, disabledBlueprints, disabledMissions, workshopDisabled } =
-    filterState
+  const {
+    tier,
+    sortKey,
+    disabledTalents,
+    disabledFeatures,
+    disabledBlueprints,
+    disabledMissions,
+    workshopDisabled,
+  } = filterState;
 
-  const tierFiltered = items.filter((item) => getEffectiveTier(item) <= tier)
-  const tierFilteredNames = new Set(tierFiltered.map((item) => item.name))
+  const tierFiltered = items.filter((item) => getEffectiveTier(item) <= tier);
+  const tierFilteredNames = new Set(tierFiltered.map((item) => item.id));
   const loadoutAdditions = items.filter(
-    (item) => selectedNames.has(item.name) && !tierFilteredNames.has(item.name),
-  )
-  const itemsToShow = [...tierFiltered, ...loadoutAdditions]
-  const sorted = sortItems(itemsToShow, sortKey)
-  const shownOnlyAsLoadout = new Set(loadoutAdditions.map((item) => item.name))
+    (item) => selectedNames.has(item.id) && !tierFilteredNames.has(item.id)
+  );
+  const itemsToShow = [...tierFiltered, ...loadoutAdditions];
+  const sorted = sortItems(itemsToShow, sortKey);
+  const shownOnlyAsLoadout = new Set(loadoutAdditions.map((item) => item.id));
 
   if (sorted.length === 0) {
     return (
       <div className="flex min-h-48 items-center justify-center">
         <p className="text-sm text-gray-500">No items match your filters.</p>
       </div>
-    )
+    );
   }
 
   return (
@@ -85,25 +92,25 @@ export default function ConsumableGrid({
             disabledBlueprints.has(item.requirements.blueprint)) ||
           (item.requirements?.mission !== undefined &&
             disabledMissions.has(String(item.requirements.mission))) ||
-          (item.requirements?.workshop !== undefined && workshopDisabled)
-        const dimmed = filterDimmed || shownOnlyAsLoadout.has(item.name)
+          (item.requirements?.workshop !== undefined && workshopDisabled);
+        const dimmed = filterDimmed || shownOnlyAsLoadout.has(item.id);
         return (
           <ConsumableCard
-            key={item.name}
+            key={item.id}
             item={item}
             modifiers={modifiers}
             recipes={recipes}
             statMetadata={statMetadata}
             dimmed={dimmed}
             selectionDisabled={filterDimmed}
-            selected={selectedNames.has(item.name)}
+            selected={selectedNames.has(item.id)}
             conflicted={
-              !selectedNames.has(item.name) &&
-              item.modifiers.some((mid) => blockedModIds.has(mid))
+              !selectedNames.has(item.id) &&
+              Object.keys(item.modifiers).some((mid) => blockedModIds.has(mid))
             }
             onClick={() => onToggleItem(item)}
             viewMode={cardViewMode}
-            isInLoadout={selectedNames.has(item.name)}
+            isInLoadout={selectedNames.has(item.id)}
             itemsMap={itemsMap}
             recipeOverrides={recipeOverrides}
             genericSelections={genericSelections}
@@ -115,8 +122,8 @@ export default function ConsumableGrid({
             onSetRecipe={onSetRecipe}
             onSetGeneric={onSetGeneric}
           />
-        )
+        );
       })}
     </div>
-  )
+  );
 }

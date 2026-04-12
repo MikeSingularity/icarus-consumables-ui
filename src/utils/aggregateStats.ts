@@ -1,16 +1,16 @@
-import type { Item, Modifier } from '@/types/consumables'
+import type { Item, Modifier } from '@/types/consumables';
 
 /**
  * Sums base_stats values across all selected items, per stat key.
  */
 export function aggregateBaseStats(items: Item[]): Record<string, number> {
-  const result: Record<string, number> = {}
+  const result: Record<string, number> = {};
   for (const item of items) {
     for (const [key, value] of Object.entries(item.base_stats)) {
-      result[key] = (result[key] ?? 0) + value
+      result[key] = (result[key] ?? 0) + value;
     }
   }
-  return result
+  return result;
 }
 
 /**
@@ -20,41 +20,38 @@ export function aggregateBaseStats(items: Item[]): Record<string, number> {
  */
 export function aggregateModifierEffects(
   items: Item[],
-  modifiers: Record<string, Modifier>,
+  modifiers: Record<string, Modifier>
 ): Record<string, number> {
-  const seenMods = new Set<string>()
-  const result: Record<string, number> = {}
+  const seenMods = new Set<string>();
+  const result: Record<string, number> = {};
   for (const item of items) {
-    for (const mid of item.modifiers) {
-      if (seenMods.has(mid)) continue
-      seenMods.add(mid)
-      const mod = modifiers[mid]
-      if (mod === undefined) continue
+    for (const mid of Object.keys(item.modifiers)) {
+      if (seenMods.has(mid)) continue;
+      seenMods.add(mid);
+      const mod = modifiers[mid];
+      if (mod === undefined) continue;
       for (const [key, value] of Object.entries(mod.stats)) {
-        result[key] = (result[key] ?? 0) + value
+        result[key] = (result[key] ?? 0) + value;
       }
     }
   }
-  return result
+  return result;
 }
 
 /**
  * Returns the unique Modifier objects (in encounter order) across all selected items.
  * Used to display per-modifier lifetimes alongside the summed effect totals.
  */
-export function collectModifiers(
-  items: Item[],
-  modifiers: Record<string, Modifier>,
-): Modifier[] {
-  const seen = new Set<string>()
-  const result: Modifier[] = []
+export function collectModifiers(items: Item[], modifiers: Record<string, Modifier>): Modifier[] {
+  const seen = new Set<string>();
+  const result: Modifier[] = [];
   for (const item of items) {
-    for (const mid of item.modifiers) {
-      if (seen.has(mid)) continue
-      seen.add(mid)
-      const mod = modifiers[mid]
-      if (mod !== undefined) result.push(mod)
+    for (const mid of Object.keys(item.modifiers)) {
+      if (seen.has(mid)) continue;
+      seen.add(mid);
+      const mod = modifiers[mid];
+      if (mod !== undefined) result.push(mod);
     }
   }
-  return result
+  return result;
 }

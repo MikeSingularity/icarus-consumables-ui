@@ -7,4 +7,4 @@ export const BUFF_ABBREVIATIONS: Record<string, string> = {
   'Experience Gained for Tamed Creatures': 'Exp. Gain for Tames',
   'Chance to Return Melee Physical Damage to Attacker': 'Reflect Melee Damage',
   'Melee Physical Damage Returned': 'Melee Damage Returned',
-}
+};

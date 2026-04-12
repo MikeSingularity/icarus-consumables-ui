@@ -5,14 +5,14 @@
  * Sort uses item.modifier_stats[category] descending.
  */
 export const MODIFIER_SORT_CATEGORIES = [
-  'Health',
-  'Stamina',
-  'Experience',
-  'Weather',
-  'Mining',
-  'Melee Weapon',
-  'Ranged Weapon',
-] as const
+  'health',
+  'stamina',
+  'experience',
+  'weather',
+  'mining',
+  'melee_weapon',
+  'ranged_weapon',
+] as const;
 
 /**
  * Display order for base_stat keys on item cards and in the sort dropdown.
@@ -23,7 +23,7 @@ export const BASE_STAT_DISPLAY_ORDER: readonly string[] = [
   'BaseWaterRecovery_+',
   'BaseHealthRecovery_+',
   'BaseOxygenRecovery_+',
-]
+];
 
 /**
  * localStorage keys used to persist filter state across sessions.
@@ -37,4 +37,4 @@ export const LS_KEYS = {
   DISABLED_MISSIONS: 'icarus:disabledMissions',
   WORKSHOP_DISABLED: 'icarus:workshopDisabled',
   SLOTS: 'icarus:slots',
-} as const
+} as const;

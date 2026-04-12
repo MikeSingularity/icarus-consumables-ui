@@ -4,7 +4,7 @@
  */
 interface HowToModalProps {
   /** Called when the modal should be closed. */
-  onClose: () => void
+  onClose: () => void;
 }
 
 export function HowToModal({ onClose }: HowToModalProps): React.JSX.Element {
@@ -43,7 +43,8 @@ export function HowToModal({ onClose }: HowToModalProps): React.JSX.Element {
             <p>
               Click a card to add the item to your loadout (sidebar). You can select up to the slot
               count shown; items that share the same buff cannot be selected together. Click again
-              or use the sidebar to remove. Aggregated stats and effects appear in the loadout panel.
+              or use the sidebar to remove. Aggregated stats and effects appear in the loadout
+              panel.
             </p>
           </section>
 
@@ -67,5 +68,5 @@ export function HowToModal({ onClose }: HowToModalProps): React.JSX.Element {
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -6,14 +6,14 @@ This document defines hosting, stack, phased feature set, and implementation sta
 
 ## 1. Decisions and Constraints
 
-| Concern | Decision |
-| --- | --- |
-| Hosting | Cloudflare Pages; auto-generated `*.pages.dev` URL |
-| Framework | React 19 + TypeScript + Vite 7 |
-| Package manager | pnpm |
-| Data source | Runtime fetch; URL from `VITE_DATA_URL` or fallback (see `docs/json_url.txt`) |
-| Initial scope | Consumable items with modifiers (filter excludes inedible); Food-focused UX |
-| Theme | Dark mode first |
+| Concern         | Decision                                                                      |
+| --------------- | ----------------------------------------------------------------------------- |
+| Hosting         | Cloudflare Pages; auto-generated `*.pages.dev` URL                            |
+| Framework       | React 19 + TypeScript + Vite 7                                                |
+| Package manager | pnpm                                                                          |
+| Data source     | Runtime fetch; URL from `VITE_DATA_URL` or fallback (see `docs/json_url.txt`) |
+| Initial scope   | Consumable items with modifiers (filter excludes inedible); Food-focused UX   |
+| Theme           | Dark mode first                                                               |
 
 ---
 
@@ -57,13 +57,13 @@ This document defines hosting, stack, phased feature set, and implementation sta
 
 ## 4. Phase Summary and Status
 
-| Phase | Scope | Status |
-| --- | --- | --- |
-| **1** | Food browser: card grid, filter bar (tier, sort, talents, DLC), item cards (tier, base stats, modifiers, bench) | Done |
-| **2** | Loadout builder: slot count, selection with modifier conflict blocking, loadout panel, aggregated stats, stateful URL (`?i=...&l=...`) | Done |
-| **3** | Farming calculator: servings/hr from modifier lifetime or override, ingredient resolution, recipe/generic/derived overrides, crop plots and stockpile lists, URL params `r`, `g`, `d`, `s` | Done |
-| **3b** | Card recipe view: global Modifiers/Recipe toggle, recipe view on cards (one level), recipe and generic dropdowns when in loadout; derived recipe overrides in sidebar | Done |
-| **4** | Expanded categories (Drink, Animal Food), PWA, QR code for URL, mobile summary view | Not implemented |
+| Phase  | Scope                                                                                                                                                                                      | Status          |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------- |
+| **1**  | Food browser: card grid, filter bar (tier, sort, talents, DLC), item cards (tier, base stats, modifiers, bench)                                                                            | Done            |
+| **2**  | Loadout builder: slot count, selection with modifier conflict blocking, loadout panel, aggregated stats, stateful URL (`?i=...&l=...`)                                                     | Done            |
+| **3**  | Farming calculator: servings/hr from modifier lifetime or override, ingredient resolution, recipe/generic/derived overrides, crop plots and stockpile lists, URL params `r`, `g`, `d`, `s` | Done            |
+| **3b** | Card recipe view: global Modifiers/Recipe toggle, recipe view on cards (one level), recipe and generic dropdowns when in loadout; derived recipe overrides in sidebar                      | Done            |
+| **4**  | Expanded categories (Drink, Animal Food), PWA, QR code for URL, mobile summary view                                                                                                        | Not implemented |
 
 ---
 

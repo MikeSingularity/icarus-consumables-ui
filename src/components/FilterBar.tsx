@@ -1,39 +1,39 @@
-import { useState } from 'react'
-import { FilterModal } from './FilterModal'
-import type { SortOption } from '@/types/ui'
+import { useState } from 'react';
+import { FilterModal } from './FilterModal';
+import type { SortOption } from '@/types/ui';
 
 interface FilterBarProps {
-  tier: number
-  onTierChange: (tier: number) => void
-  sortKey: string
-  onSortChange: (key: string) => void
-  sortOptions: SortOption[]
-  talents: string[]
-  features: string[]
-  blueprints: string[]
-  missions: string[]
-  requirementsRegistry: Record<string, string>
-  featureNames: Record<string, string>
-  featureColors: Record<string, string>
-  missionColors: Record<string, string>
-  disabledTalents: Set<string>
-  disabledFeatures: Set<string>
-  disabledBlueprints: Set<string>
-  disabledMissions: Set<string>
+  tier: number;
+  onTierChange: (tier: number) => void;
+  sortKey: string;
+  onSortChange: (key: string) => void;
+  sortOptions: SortOption[];
+  talents: string[];
+  features: string[];
+  blueprints: string[];
+  missions: string[];
+  requirementsRegistry: Record<string, string>;
+  featureNames: Record<string, string>;
+  featureColors: Record<string, string>;
+  missionColors: Record<string, string>;
+  disabledTalents: Set<string>;
+  disabledFeatures: Set<string>;
+  disabledBlueprints: Set<string>;
+  disabledMissions: Set<string>;
   /** When true, items with any workshop requirement are dimmed. */
-  workshopDisabled: boolean
+  workshopDisabled: boolean;
   /** True if any item has a workshop requirement. */
-  hasWorkshopItems: boolean
+  hasWorkshopItems: boolean;
   /** True if any item has a mission requirement. */
-  hasMissionItems: boolean
-  onToggleTalent: (talent: string) => void
-  onToggleFeature: (feature: string) => void
-  onToggleBlueprint: (blueprint: string) => void
-  onToggleMission: (mission: string) => void
-  onToggleWorkshop: () => void
-  onEnableAllRequirements: () => void
-  cardViewMode: 'modifiers' | 'recipe'
-  onCardViewModeChange: (mode: 'modifiers' | 'recipe') => void
+  hasMissionItems: boolean;
+  onToggleTalent: (talent: string) => void;
+  onToggleFeature: (feature: string) => void;
+  onToggleBlueprint: (blueprint: string) => void;
+  onToggleMission: (mission: string) => void;
+  onToggleWorkshop: () => void;
+  onEnableAllRequirements: () => void;
+  cardViewMode: 'modifiers' | 'recipe';
+  onCardViewModeChange: (mode: 'modifiers' | 'recipe') => void;
 }
 
 /**
@@ -71,20 +71,20 @@ export function FilterBar({
   cardViewMode,
   onCardViewModeChange,
 }: FilterBarProps): React.JSX.Element {
-  const [filterModalOpen, setFilterModalOpen] = useState(false)
+  const [filterModalOpen, setFilterModalOpen] = useState(false);
 
   const disabledCount =
     disabledTalents.size +
     disabledFeatures.size +
     disabledBlueprints.size +
     disabledMissions.size +
-    (workshopDisabled ? 1 : 0)
+    (workshopDisabled ? 1 : 0);
   const showFilterButton =
     talents.length > 0 ||
     features.length > 0 ||
     blueprints.length > 0 ||
     hasWorkshopItems ||
-    hasMissionItems
+    hasMissionItems;
 
   return (
     <>
@@ -189,5 +189,5 @@ export function FilterBar({
         />
       )}
     </>
-  )
+  );
 }

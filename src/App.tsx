@@ -1,32 +1,31 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useConsumablesData } from '@/hooks/useConsumablesData'
-import { useFilterState } from '@/hooks/useFilterState'
-import { useLoadoutState } from '@/hooks/useLoadoutState'
-import { useFarmingState } from '@/hooks/useFarmingState'
-import { buildSortOptions } from '@/utils/sortItems'
-import { buildItemsMap, buildGenericsMap } from '@/utils/farmingCalc'
+import { useEffect, useMemo, useState } from 'react';
+import { useConsumablesData } from '@/hooks/useConsumablesData';
+import { useFilterState } from '@/hooks/useFilterState';
+import { useLoadoutState } from '@/hooks/useLoadoutState';
+import { useFarmingState } from '@/hooks/useFarmingState';
+import { buildSortOptions } from '@/utils/sortItems';
 import {
   buildCanonicalSearchString,
   filterCanonicalParamsToRelevant,
   type RelevantUrlContext,
-} from '@/utils/urlState'
-import { computeFarmingResult } from '@/utils/farmingCalc'
-import { LoadingSpinner } from '@/components/LoadingSpinner'
-import { FilterBar } from '@/components/FilterBar'
-import ConsumableGrid from '@/components/ConsumableGrid'
-import { LoadoutPanel } from '@/components/LoadoutPanel'
-import { FarmingPanel } from '@/components/FarmingPanel'
-import { HowToModal } from '@/components/HowToModal'
-import { QrCodeModal } from '@/components/QrCodeModal'
-import { ISSUES_URL } from '@/constants/appLinks'
-import { buildOrderedColorMap } from '@/utils/dlcbadge'
+} from '@/utils/urlState';
+import { computeFarmingResult } from '@/utils/farmingCalc';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { FilterBar } from '@/components/FilterBar';
+import ConsumableGrid from '@/components/ConsumableGrid';
+import { LoadoutPanel } from '@/components/LoadoutPanel';
+import { FarmingPanel } from '@/components/FarmingPanel';
+import { HowToModal } from '@/components/HowToModal';
+import { QrCodeModal } from '@/components/QrCodeModal';
+import { ISSUES_URL } from '@/constants/appLinks';
+import { buildOrderedColorMap } from '@/utils/dlcbadge';
 
 /**
  * Root application component.
  * Fetches consumables data, manages filter and loadout state, and composes the page layout.
  */
 export default function App(): React.JSX.Element {
-  const { data, loading, error } = useConsumablesData()
+  const { data, loading, error } = useConsumablesData();
   const {
     filterState,
     setTier,
@@ -37,7 +36,7 @@ export default function App(): React.JSX.Element {
     toggleMission,
     toggleWorkshop,
     enableAllRequirements,
-  } = useFilterState()
+  } = useFilterState();
 
   // Memoized so the array reference is stable across re-renders.
   // useLoadoutState depends on this reference to know when to run the URL restore effect —
@@ -45,12 +44,12 @@ export default function App(): React.JSX.Element {
   const foodItems = useMemo(
     () =>
       data !== null
-        ? data.items.filter(
-            (item) => item.traits?.is_inedible !== true && item.modifiers.length > 0,
+        ? Object.values(data.items).filter(
+            (item) => item.category === 'Food' && !item.tags.includes('FieldGuide.BlackList')
           )
         : null,
-    [data],
-  )
+    [data]
+  );
 
   const {
     selectedItems,
@@ -60,16 +59,16 @@ export default function App(): React.JSX.Element {
     setSlotCount,
     clearLoadout,
     dismissConflict,
-  } = useLoadoutState(foodItems)
+  } = useLoadoutState(foodItems);
 
   const farmingValidationContext = useMemo(() => {
-    if (data === null) return null
+    if (data === null) return null;
     return {
       recipeIds: new Set(Object.keys(data.recipes)),
-      genericIds: new Set(data.generics.map((g) => g.id)),
-      genericIdToItems: buildGenericsMap(data.generics),
-    }
-  }, [data])
+      genericIds: new Set(Object.keys(data.generics)),
+      genericIdToItems: data.generics,
+    };
+  }, [data]);
 
   const {
     servingsOverrides,
@@ -84,40 +83,40 @@ export default function App(): React.JSX.Element {
     setDerivedRecipeOverride,
     setFarmingGrowthBonusPct,
     setFarmingYieldBonusPct,
-  } = useFarmingState(farmingValidationContext)
+  } = useFarmingState(farmingValidationContext);
 
-  const [cardViewMode, setCardViewMode] = useState<'modifiers' | 'recipe'>('modifiers')
-  const [howToOpen, setHowToOpen] = useState(false)
-  const [qrCodeOpen, setQrCodeOpen] = useState(false)
+  const [cardViewMode, setCardViewMode] = useState<'modifiers' | 'recipe'>('modifiers');
+  const [howToOpen, setHowToOpen] = useState(false);
+  const [qrCodeOpen, setQrCodeOpen] = useState(false);
 
-  const itemsMap = useMemo(() => (data !== null ? buildItemsMap(data.items) : {}), [data])
-  const genericsMap = useMemo(() => (data !== null ? buildGenericsMap(data.generics) : {}), [data])
+  const itemsMap = useMemo(() => (data !== null ? data.items : {}), [data]);
+  const genericsMap = useMemo(() => (data !== null ? data.generics : {}), [data]);
 
   const features = useMemo(() => {
-    if (foodItems === null) return []
-    return [...new Set(foodItems.flatMap((item) => item.requirements?.features ?? []))].sort()
-  }, [foodItems])
+    if (foodItems === null) return [];
+    return [...new Set(foodItems.flatMap((item) => item.requirements?.features ?? []))].sort();
+  }, [foodItems]);
   const missions = useMemo(() => {
-    if (foodItems === null) return []
+    if (foodItems === null) return [];
     return [
       ...new Set(
         foodItems
           .map((item) => item.requirements?.mission)
           .filter((m): m is string => m != null)
-          .map((m) => String(m)),
+          .map((m) => String(m))
       ),
-    ].sort()
-  }, [foodItems])
-  const featureColors = useMemo(() => buildOrderedColorMap(features), [features])
-  const missionColors = useMemo(() => buildOrderedColorMap(missions), [missions])
+    ].sort();
+  }, [foodItems]);
+  const featureColors = useMemo(() => buildOrderedColorMap(features), [features]);
+  const missionColors = useMemo(() => buildOrderedColorMap(missions), [missions]);
 
   const loadoutItemsWithModifiers = useMemo(
-    () => selectedItems.filter((item) => item.modifiers.length > 0),
-    [selectedItems],
-  )
+    () => selectedItems.filter((item) => Object.keys(item.modifiers).length > 0),
+    [selectedItems]
+  );
 
   const farmingResultForUrl = useMemo(() => {
-    if (data === null) return null
+    if (data === null) return null;
     return computeFarmingResult({
       loadoutItems: loadoutItemsWithModifiers,
       itemsMap,
@@ -131,7 +130,7 @@ export default function App(): React.JSX.Element {
       statMetadata: data.stats,
       farmingGrowthBonusPct,
       farmingYieldBonusPct,
-    })
+    });
   }, [
     data,
     loadoutItemsWithModifiers,
@@ -143,40 +142,42 @@ export default function App(): React.JSX.Element {
     derivedRecipeOverrides,
     farmingGrowthBonusPct,
     farmingYieldBonusPct,
-  ])
+  ]);
 
   const relevantUrlContext = useMemo((): RelevantUrlContext => {
-    const loadoutItemNames = new Set(selectedItems.map((i) => i.name))
+    const loadoutItemNames = new Set(selectedItems.map((i) => i.id));
     if (farmingResultForUrl === null) {
       return {
         loadoutItemNames,
         derivedIngredientNames: new Set(),
         genericIds: new Set(),
-      }
+      };
     }
     return {
       loadoutItemNames,
-      derivedIngredientNames: new Set(farmingResultForUrl.derivedRecipeChoices.map((c) => c.ingredientName)),
+      derivedIngredientNames: new Set(
+        farmingResultForUrl.derivedRecipeChoices.map((c) => c.ingredientName)
+      ),
       genericIds: new Set(farmingResultForUrl.genericChoices.map((g) => g.genericId)),
-    }
-  }, [selectedItems, farmingResultForUrl])
+    };
+  }, [selectedItems, farmingResultForUrl]);
 
   useEffect(() => {
-    if (data === null) return
+    if (data === null) return;
     const params = filterCanonicalParamsToRelevant(
       {
-        itemNames: selectedItems.map((i) => i.name),
+        itemNames: selectedItems.map((i) => i.id),
         slotCount,
         recipeOverrides,
         genericSelections,
         derivedRecipeOverrides,
         servingsOverrides,
       },
-      relevantUrlContext,
-    )
-    const search = buildCanonicalSearchString(params)
-    const url = window.location.pathname + search + window.location.hash
-    window.history.replaceState(null, '', url)
+      relevantUrlContext
+    );
+    const search = buildCanonicalSearchString(params);
+    const url = window.location.pathname + search + window.location.hash;
+    window.history.replaceState(null, '', url);
   }, [
     data,
     selectedItems,
@@ -186,9 +187,9 @@ export default function App(): React.JSX.Element {
     derivedRecipeOverrides,
     servingsOverrides,
     relevantUrlContext,
-  ])
+  ]);
 
-  if (loading) return <LoadingSpinner />
+  if (loading) return <LoadingSpinner />;
 
   if (error !== null || data === null) {
     return (
@@ -198,50 +199,50 @@ export default function App(): React.JSX.Element {
           {error !== null && <p className="mt-1 text-xs text-gray-500">{error}</p>}
         </div>
       </div>
-    )
+    );
   }
 
   // foodItems is guaranteed non-null past this point.
-  const items = foodItems!
+  const items = foodItems!;
 
   const talents = [
     ...new Set(
-      items.map((item) => item.requirements?.talent).filter((t): t is string => t !== undefined),
+      items.map((item) => item.requirements?.talent).filter((t): t is string => t !== undefined)
     ),
-  ].sort()
+  ].sort();
 
   const blueprints = [
     ...new Set(
-      items.map((item) => item.requirements?.blueprint).filter((b): b is string => b !== undefined),
+      items.map((item) => item.requirements?.blueprint).filter((b): b is string => b !== undefined)
     ),
-  ].sort()
+  ].sort();
 
   // Build a display-name dict for DLC features. Prefer the top-level features dict when present.
   const featureNames: Record<string, string> =
     data.features != null && Object.keys(data.features).length > 0
       ? data.features
-      : Object.fromEntries(features.map((f) => [f, f]))
+      : Object.fromEntries(features.map((f) => [f, f]));
 
-  const hasWorkshopItems = items.some((item) => item.requirements?.workshop !== undefined)
-  const hasMissionItems = items.some((item) => item.requirements?.mission !== undefined)
+  const hasWorkshopItems = items.some((item) => item.requirements?.workshop !== undefined);
+  const hasMissionItems = items.some((item) => item.requirements?.mission !== undefined);
 
   // Normalize requirements registry from top-level data.requirements (talent, blueprint, workshop, mission, etc.).
-  const requirementsRegistry: Record<string, string> = {}
+  const requirementsRegistry: Record<string, string> = {};
   const toDisplay = (val: unknown, id: string): string =>
-    typeof val === 'string' ? val : (val as { display_name?: string })?.display_name ?? id
+    typeof val === 'string' ? val : ((val as { display_name?: string })?.display_name ?? id);
   for (const [id, val] of Object.entries(data.requirements ?? {})) {
-    requirementsRegistry[id] = toDisplay(val, id)
+    requirementsRegistry[id] = toDisplay(val, id);
   }
 
-  const sortOptions = buildSortOptions(items, data.stats)
+  const sortOptions = buildSortOptions(items, data.stats, data.stat_categories ?? {});
 
   // Validate persisted sort key against current options; fall back to 'tier' if stale.
   const validSortKey = sortOptions.some((o) => o.key === filterState.sortKey)
     ? filterState.sortKey
-    : 'tier'
+    : 'tier';
 
-  const selectedNames = new Set(selectedItems.map((item) => item.name))
-  const blockedModIds = new Set(selectedItems.flatMap((item) => item.modifiers))
+  const selectedNames = new Set(selectedItems.map((item) => item.id));
+  const blockedModIds = new Set(selectedItems.flatMap((item) => Object.keys(item.modifiers)));
 
   const {
     client_version,
@@ -250,7 +251,14 @@ export default function App(): React.JSX.Element {
     latest_week,
     parser_version,
     generated_date,
-  } = data.metadata
+  } = data.metadata ?? {
+    client_version: 'Unknown',
+    last_sync_date: 'Unknown',
+    patchnotes_url: '',
+    latest_week: '',
+    parser_version: 'Unknown',
+    generated_date: 'Unknown',
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-950 text-gray-100">
@@ -347,8 +355,8 @@ export default function App(): React.JSX.Element {
             filterState={{ ...filterState, sortKey: validSortKey }}
             selectedNames={selectedNames}
             blockedModIds={blockedModIds}
-          requirementsRegistry={requirementsRegistry}
-          featureNames={featureNames}
+            requirementsRegistry={requirementsRegistry}
+            featureNames={featureNames}
             featureColors={featureColors}
             missionColors={missionColors}
             onToggleItem={toggleItem}
@@ -376,10 +384,10 @@ export default function App(): React.JSX.Element {
           />
           <FarmingPanel
             selectedItems={selectedItems}
-            allItems={data.items}
+            allItems={Object.values(data.items)}
             recipes={data.recipes}
             modifiers={data.modifiers}
-            generics={data.generics}
+            generics={Object.values(data.generics)}
             statMetadata={data.stats}
             servingsOverrides={servingsOverrides}
             recipeOverrides={recipeOverrides}
@@ -397,9 +405,14 @@ export default function App(): React.JSX.Element {
         </aside>
       </div>
 
-      <footer className="mt-auto border-t border-gray-800 bg-gray-900 px-4 py-2 text-center text-xs text-gray-500">
-        Parser {parser_version} · Parsed {generated_date}
+      <footer className="mt-auto border-t border-gray-800 bg-gray-900 px-4 py-3 text-center text-xs text-gray-500">
+        <div className="mb-1">
+          Unofficial community tool — not affiliated with RocketWerkz Studios Limited
+        </div>
+        <div className="opacity-60">
+          Parser {parser_version} · Parsed {generated_date}
+        </div>
       </footer>
     </div>
-  )
+  );
 }

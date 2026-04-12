@@ -1,4 +1,4 @@
-import type { Item } from '@/types/consumables'
+import type { Item } from '@/types/consumables';
 
 /**
  * Returns the effective tier for an item: the maximum of the item's base tier
@@ -6,7 +6,7 @@ import type { Item } from '@/types/consumables'
  * food that requires T3 is treated as T3.
  */
 export function getEffectiveTier(item: Item): number {
-  const baseTier = Math.floor(item.tier.total)
-  const requiredTier = item.requirements?.tier ?? 0
-  return Math.max(baseTier, requiredTier)
+  const baseTier = Math.floor(parseFloat(item.tier));
+  const requiredTier = item.requirements?.tier ?? 0;
+  return Math.max(baseTier, requiredTier);
 }

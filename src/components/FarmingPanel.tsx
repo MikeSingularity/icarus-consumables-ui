@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react';
 import {
   computeFarmingResult,
   buildItemsMap,
@@ -8,9 +8,10 @@ import {
   getAvailableRecipeIds,
   getEffectiveRecipeId,
   getDurationMultiplier,
-} from '@/utils/farmingCalc'
-import { formatLifetime, formatRecipeLabel } from '@/utils/formatters'
-import type { Item, Recipe, Modifier, Generic, StatMetadataEntry } from '@/types/consumables'
+} from '@/utils/farmingCalc';
+import { formatLifetime, formatRecipeLabel, applyDisplayOperations } from '@/utils/formatters';
+import { isContainer } from '@/utils/tagUtils';
+import type { Item, Recipe, Modifier, Generic, StatMetadataEntry } from '@/types/consumables';
 
 /**
  * A controlled numeric input that manages its own string state internally
@@ -25,22 +26,22 @@ function NumericInput({
   max,
   step,
 }: {
-  value: number
-  onChange: (v: number) => void
-  className: string
-  min?: number
-  max?: number
-  step?: string
+  value: number;
+  onChange: (v: number) => void;
+  className: string;
+  min?: number;
+  max?: number;
+  step?: string;
 }) {
-  const [localValue, setLocalValue] = useState<string>(value.toString())
-  const [prevValue, setPrevValue] = useState<number>(value)
+  const [localValue, setLocalValue] = useState<string>(value.toString());
+  const [prevValue, setPrevValue] = useState<number>(value);
 
   if (value !== prevValue) {
-    setPrevValue(value)
-    const parsedLocal = parseFloat(localValue)
+    setPrevValue(value);
+    const parsedLocal = parseFloat(localValue);
     if (isNaN(parsedLocal) || parsedLocal !== value) {
       if (!(localValue === '' && value === 0)) {
-        setLocalValue(value.toString())
+        setLocalValue(value.toString());
       }
     }
   }
@@ -54,42 +55,42 @@ function NumericInput({
       value={localValue}
       onFocus={(e) => e.target.select()}
       onChange={(e) => {
-        const val = e.target.value
-        setLocalValue(val)
-        const v = parseFloat(val)
+        const val = e.target.value;
+        setLocalValue(val);
+        const v = parseFloat(val);
         if (!isNaN(v)) {
-          onChange(v)
+          onChange(v);
         } else {
           // If empty, assume 0 for calculations but keep it empty in text
-          onChange(0)
+          onChange(0);
         }
       }}
       className={className}
     />
-  )
+  );
 }
 
 interface FarmingPanelProps {
-  selectedItems: Item[]
-  allItems: Item[]
-  recipes: Record<string, Recipe>
-  modifiers: Record<string, Modifier>
-  generics: Generic[]
-  statMetadata: Record<string, StatMetadataEntry>
-  servingsOverrides: Record<string, number>
-  recipeOverrides: Record<string, string>
-  genericSelections: Record<string, string>
-  derivedRecipeOverrides: Record<string, string>
+  selectedItems: Item[];
+  allItems: Item[];
+  recipes: Record<string, Recipe>;
+  modifiers: Record<string, Modifier>;
+  generics: Generic[];
+  statMetadata: Record<string, StatMetadataEntry>;
+  servingsOverrides: Record<string, number>;
+  recipeOverrides: Record<string, string>;
+  genericSelections: Record<string, string>;
+  derivedRecipeOverrides: Record<string, string>;
   /** Global farming growth speed bonus in percent (e.g. 10 for +10%). */
-  farmingGrowthBonusPct: number
+  farmingGrowthBonusPct: number;
   /** Global farming yield bonus in percent (e.g. 10 for +10%). */
-  farmingYieldBonusPct: number
-  onSetServings: (itemName: string, value: number) => void
-  onSetRecipe: (itemName: string, recipeId: string) => void
-  onSetGeneric: (genericId: string, itemName: string) => void
-  onSetDerivedRecipe: (ingredientName: string, recipeId: string) => void
-  onSetFarmingGrowthBonusPct: (bonusPct: number) => void
-  onSetFarmingYieldBonusPct: (bonusPct: number) => void
+  farmingYieldBonusPct: number;
+  onSetServings: (itemName: string, value: number) => void;
+  onSetRecipe: (itemName: string, recipeId: string) => void;
+  onSetGeneric: (genericId: string, itemName: string) => void;
+  onSetDerivedRecipe: (ingredientName: string, recipeId: string) => void;
+  onSetFarmingGrowthBonusPct: (bonusPct: number) => void;
+  onSetFarmingYieldBonusPct: (bonusPct: number) => void;
 }
 
 /**
@@ -117,13 +118,16 @@ export function FarmingPanel({
   onSetFarmingGrowthBonusPct,
   onSetFarmingYieldBonusPct,
 }: FarmingPanelProps): React.JSX.Element | null {
-  const itemsMap = useMemo(() => buildItemsMap(allItems), [allItems])
-  const genericsMap = useMemo(() => buildGenericsMap(generics), [generics])
+  const [isRecipesExpanded, setIsRecipesExpanded] = useState(true);
+  const [isBonusesExpanded, setIsBonusesExpanded] = useState(true);
+
+  const itemsMap = useMemo(() => buildItemsMap(allItems), [allItems]);
+  const genericsMap = useMemo(() => buildGenericsMap(generics), [generics]);
 
   const loadoutItemsWithModifiers = useMemo(
-    () => selectedItems.filter((item) => item.modifiers.length > 0),
-    [selectedItems],
-  )
+    () => selectedItems.filter((item) => Object.keys(item.modifiers).length > 0),
+    [selectedItems]
+  );
 
   const result = useMemo(
     () =>
@@ -154,12 +158,12 @@ export function FarmingPanel({
       statMetadata,
       farmingGrowthBonusPct,
       farmingYieldBonusPct,
-    ],
-  )
+    ]
+  );
 
-  if (selectedItems.length === 0) return null
+  if (selectedItems.length === 0) return null;
 
-  const isEmpty = result.cropPlots.length === 0 && result.stockpile.length === 0
+  const isEmpty = result.cropPlots.length === 0 && result.stockpile.length === 0;
 
   return (
     <section className="border-t border-gray-800 bg-gray-900 px-4 py-4">
@@ -168,26 +172,26 @@ export function FarmingPanel({
       {/* Per-item configuration: only for items with modifiers */}
       <div className="mb-5 flex flex-wrap gap-4">
         {loadoutItemsWithModifiers.map((item) => {
-          const needsServings = needsServingsOverride(item, modifiers)
-          const availableRecipes = getAvailableRecipeIds(item, itemsMap)
-          const activeRecipeId = getEffectiveRecipeId(item, itemsMap, recipeOverrides)
+          const needsServings = needsServingsOverride(item, modifiers);
+          const availableRecipes = getAvailableRecipeIds(item, itemsMap);
+          const activeRecipeId = getEffectiveRecipeId(item, itemsMap, recipeOverrides);
           const durationMultiplier = getDurationMultiplier(
             loadoutItemsWithModifiers,
             modifiers,
-            statMetadata,
-          )
+            statMetadata
+          );
           const itemsPerHr = getItemsPerHour(
             item,
             modifiers,
             servingsOverrides,
-            durationMultiplier,
-          )
+            durationMultiplier
+          );
 
           // Skip items that need no configuration
-          if (!needsServings && availableRecipes.length <= 1) return null
+          if (!needsServings && availableRecipes.length <= 1) return null;
 
           return (
-            <div key={item.name} className="rounded border border-gray-700 bg-gray-900 px-3 py-2">
+            <div key={item.id} className="rounded border border-gray-700 bg-gray-900 px-3 py-2">
               <p className="mb-2 text-xs font-medium text-gray-300">{item.display_name}</p>
               <div className="flex flex-wrap items-center gap-3">
                 {needsServings ? (
@@ -196,8 +200,8 @@ export function FarmingPanel({
                     <NumericInput
                       min={0.1}
                       step="0.5"
-                      value={servingsOverrides[item.name] ?? 1}
-                      onChange={(v) => onSetServings(item.name, v)}
+                      value={servingsOverrides[item.id] ?? 1}
+                      onChange={(v) => onSetServings(item.id, v)}
                       className="w-16 rounded border border-gray-600 bg-gray-800 px-1.5 py-0.5 text-right text-gray-200 focus:border-blue-500 focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                     />
                   </label>
@@ -210,23 +214,23 @@ export function FarmingPanel({
                     Recipe
                     <select
                       value={activeRecipeId ?? ''}
-                      onChange={(e) => onSetRecipe(item.name, e.target.value)}
+                      onChange={(e) => onSetRecipe(item.id, e.target.value)}
                       className="rounded border border-gray-600 bg-gray-800 px-1.5 py-0.5 text-gray-200 focus:border-blue-500 focus:outline-none"
                     >
                       {availableRecipes.map((rid) => {
-                        const r = recipes[rid]
+                        const r = recipes[rid];
                         return (
                           <option key={rid} value={rid}>
                             {formatRecipeLabel(rid, r)}
                           </option>
-                        )
+                        );
                       })}
                     </select>
                   </label>
                 )}
               </div>
             </div>
-          )
+          );
         })}
       </div>
 
@@ -242,12 +246,12 @@ export function FarmingPanel({
                 className="rounded border border-gray-600 bg-gray-800 px-1.5 py-0.5 text-gray-200 focus:border-blue-500 focus:outline-none"
               >
                 {options.map((name) => {
-                  const item = itemsMap[name]
+                  const item = itemsMap[name];
                   return (
                     <option key={name} value={name}>
                       {item?.display_name ?? name.replace(/_/g, ' ')}
                     </option>
-                  )
+                  );
                 })}
               </select>
             </label>
@@ -256,77 +260,99 @@ export function FarmingPanel({
       )}
 
       {/* Global farming modifiers (affect crop growth speed and yield) */}
-      <div className="mb-5 flex flex-col gap-2 text-xs text-gray-400">
-        <label className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2">
-          Growth speed
-          <div className="flex items-center gap-1.5">
-            <NumericInput
-              step="5"
-              min={-90}
-              max={500}
-              value={Math.round(farmingGrowthBonusPct)}
-              onChange={(v) => onSetFarmingGrowthBonusPct(v)}
-              className="w-16 rounded border border-gray-600 bg-gray-800 px-1.5 py-0.5 text-right text-gray-200 focus:border-blue-500 focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-            />
-            <span>%</span>
+      <div className="mb-5">
+        <h3
+          className="mb-2 flex cursor-pointer items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500 hover:text-gray-400"
+          onClick={() => setIsBonusesExpanded(!isBonusesExpanded)}
+        >
+          Bonuses
+          <span className="font-mono text-[10px]">{isBonusesExpanded ? '[-]' : '[+]'}</span>
+        </h3>
+
+        {isBonusesExpanded && (
+          <div className="flex flex-col gap-2 text-xs text-gray-400">
+            <label className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2">
+              Growth speed
+              <div className="flex items-center gap-1.5">
+                <span className="text-gray-500 font-medium">+</span>
+                <NumericInput
+                  step="5"
+                  min={-90}
+                  max={500}
+                  value={Math.round(farmingGrowthBonusPct)}
+                  onChange={(v) => onSetFarmingGrowthBonusPct(v)}
+                  className="w-16 rounded border border-gray-600 bg-gray-800 px-1.5 py-0.5 text-right text-gray-200 focus:border-blue-500 focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                />
+                <span>%</span>
+              </div>
+            </label>
+            <label className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2">
+              Yield from harvest
+              <div className="flex items-center gap-1.5">
+                <span className="text-gray-500 font-medium">+</span>
+                <NumericInput
+                  step="5"
+                  min={-90}
+                  max={500}
+                  value={Math.round(farmingYieldBonusPct)}
+                  onChange={(v) => onSetFarmingYieldBonusPct(v)}
+                  className="w-16 rounded border border-gray-600 bg-gray-800 px-1.5 py-0.5 text-right text-gray-200 focus:border-blue-500 focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                />
+                <span>%</span>
+              </div>
+            </label>
+            <span className="mt-1 text-[11px] text-gray-500">
+              These only affect crop plots (growth time, yield, and plots needed), not buff
+              durations.
+            </span>
           </div>
-        </label>
-        <label className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2">
-          Yield per harvest
-          <div className="flex items-center gap-1.5">
-            <NumericInput
-              step="5"
-              min={-90}
-              max={500}
-              value={Math.round(farmingYieldBonusPct)}
-              onChange={(v) => onSetFarmingYieldBonusPct(v)}
-              className="w-16 rounded border border-gray-600 bg-gray-800 px-1.5 py-0.5 text-right text-gray-200 focus:border-blue-500 focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-            />
-            <span>%</span>
-          </div>
-        </label>
-        <span className="mt-1 text-[11px] text-gray-500">
-          These only affect crop plots (growth time, yield, and plots needed), not buff durations.
-        </span>
+        )}
       </div>
 
       {/* Derived recipe selectors: one per ingredient with multiple recipes (applies to all uses) */}
       {result.derivedRecipeChoices.length > 0 && (
-        <div className="mb-5 flex flex-col gap-2">
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+        <div className="mb-5">
+          <h3
+            className="mb-2 flex cursor-pointer items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500 hover:text-gray-400"
+            onClick={() => setIsRecipesExpanded(!isRecipesExpanded)}
+          >
             Choose Recipe
+            <span className="font-mono text-[10px]">{isRecipesExpanded ? '[-]' : '[+]'}</span>
           </h3>
-          {result.derivedRecipeChoices.map((choice) => {
-            const activeRecipeId =
-              derivedRecipeOverrides[choice.ingredientName] ?? choice.recipeIds[0]
-            const isValid = choice.recipeIds.includes(activeRecipeId)
-            const value = isValid ? activeRecipeId : choice.recipeIds[0]
-            return (
-              <label
-                key={choice.ingredientName}
-                className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 text-xs text-gray-400"
-                title={`Recipe for ${choice.ingredientDisplayName} (used by all loadout items)`}
-              >
-                <span className="min-w-0 truncate">{choice.ingredientDisplayName}</span>
-                <select
-                  value={value}
-                  onChange={(e) =>
-                    onSetDerivedRecipe(choice.ingredientName, e.target.value)
-                  }
-                  className="w-full min-w-[8rem] rounded border border-gray-600 bg-gray-800 px-1.5 py-0.5 text-gray-200 focus:border-blue-500 focus:outline-none"
-                >
-                  {choice.recipeIds.map((rid) => {
-                    const r = recipes[rid]
-                    return (
-                      <option key={rid} value={rid}>
-                        {formatRecipeLabel(rid, r)}
-                      </option>
-                    )
-                  })}
-                </select>
-              </label>
-            )
-          })}
+
+          {isRecipesExpanded && (
+            <div className="flex flex-col gap-2">
+              {result.derivedRecipeChoices.map((choice) => {
+                const activeRecipeId =
+                  derivedRecipeOverrides[choice.ingredientName] ?? choice.recipeIds[0];
+                const isValid = choice.recipeIds.includes(activeRecipeId);
+                const value = isValid ? activeRecipeId : choice.recipeIds[0];
+                return (
+                  <label
+                    key={choice.ingredientName}
+                    className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 text-xs text-gray-400"
+                    title={`Recipe for ${choice.ingredientDisplayName} (used by all loadout items)`}
+                  >
+                    <span className="min-w-0 truncate">{choice.ingredientDisplayName}</span>
+                    <select
+                      value={value}
+                      onChange={(e) => onSetDerivedRecipe(choice.ingredientName, e.target.value)}
+                      className="w-full min-w-[8rem] rounded border border-gray-600 bg-gray-800 px-1.5 py-0.5 text-gray-200 focus:border-blue-500 focus:outline-none"
+                    >
+                      {choice.recipeIds.map((rid) => {
+                        const r = recipes[rid];
+                        return (
+                          <option key={rid} value={rid}>
+                            {formatRecipeLabel(rid, r)}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </label>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
@@ -351,7 +377,7 @@ export function FarmingPanel({
                 </thead>
                 <tbody>
                   {result.cropPlots.map((entry) => (
-                    <tr key={entry.name} className="border-t border-gray-800">
+                    <tr key={entry.id} className="border-t border-gray-800">
                       <td className="py-1 pr-3 text-gray-200">{entry.display_name}</td>
                       <td className="py-1 pr-3 text-right font-semibold text-blue-300">
                         {entry.plotsNeeded}
@@ -382,15 +408,36 @@ export function FarmingPanel({
                     <th className="pb-1 text-right font-medium">Units/hr</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {result.stockpile.map((entry) => (
-                    <tr key={entry.name} className="border-t border-gray-800">
-                      <td className="py-1 pr-3 text-gray-200">{entry.display_name}</td>
-                      <td className="py-1 text-right text-gray-400">
-                        {entry.unitsPerHour.toFixed(1)}
-                      </td>
-                    </tr>
-                  ))}
+                <tbody className="text-gray-300">
+                  {result.stockpile.map((entry) => {
+                    const item = itemsMap[entry.id || ''];
+                    return (
+                      <tr key={entry.id} className="border-t border-gray-800">
+                        <td className="flex items-center gap-2 py-1 pr-3">
+                          <span className="truncate">{entry.display_name}</span>
+                          {item && isContainer(item) && (
+                            <span className="rounded bg-blue-500/20 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-400">
+                              Reusable
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-1 text-right font-mono font-bold text-blue-400">
+                          {(() => {
+                            const adjustedRate = applyDisplayOperations(
+                              entry.unitsPerHour,
+                              item?.display_operations
+                            );
+                            const formatted =
+                              adjustedRate % 1 !== 0
+                                ? Number(adjustedRate.toFixed(2))
+                                : adjustedRate;
+                            const unit = item?.unit ?? '';
+                            return `${formatted}${unit}/hr`;
+                          })()}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -398,5 +445,5 @@ export function FarmingPanel({
         </div>
       )}
     </section>
-  )
+  );
 }

@@ -1,4 +1,4 @@
-import { QRCodeSVG } from 'qrcode.react'
+import { QRCodeSVG } from 'qrcode.react';
 
 /**
  * Modal that shows a QR code for the current page URL.
@@ -6,14 +6,14 @@ import { QRCodeSVG } from 'qrcode.react'
  */
 interface QrCodeModalProps {
   /** Called when the modal should be closed. */
-  onClose: () => void
+  onClose: () => void;
 }
 
 /** Size of the QR code in pixels; large enough for reliable scanning. */
-const QR_SIZE = 256
+const QR_SIZE = 256;
 
 export function QrCodeModal({ onClose }: QrCodeModalProps): React.JSX.Element {
-  const url = typeof window !== 'undefined' ? window.location.href : ''
+  const url = typeof window !== 'undefined' ? window.location.href : '';
 
   return (
     <div
@@ -48,5 +48,5 @@ export function QrCodeModal({ onClose }: QrCodeModalProps): React.JSX.Element {
         </div>
       </div>
     </div>
-  )
+  );
 }

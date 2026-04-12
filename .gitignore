@@ -1,32 +1,35 @@
-# AI
-.ai-rules.md
-.cursorrules
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+pnpm-debug.log
 
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+# Build outputs
+dist/
+build/
+out/
+.next/
+.nuxt/
 
-node_modules
-dist
-dist-ssr
-*.local
+# Typescript
+*.tsbuildinfo
 
-# Local data cache (fetched from GitHub Pages, not committed)
-public-dev/icarus_consumables.min.json
-implement/
+# Coverage
+coverage/
+.nyc_output/
+.coverage
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+# Virtual Environments & Env variables
+.env
+.env.local
+.env.test
+
+# IDEs
+.idea/
+.vscode/
+
+## Output and logs -- the following directories are blocked via global gitignore.
+#logs/
+#temp/
+#public-dev/
+#extract/

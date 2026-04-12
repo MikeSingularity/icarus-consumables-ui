@@ -19,10 +19,10 @@ In `ConsumableCard` and `LoadoutPanel`, effect keys **absent** from `stats` are 
 
 ### Known affected keys (examples)
 
-| Stat key (example) | Current `display_name` (malformed) | Expected |
-| --- | --- | --- |
-| `BaseHealthRegen_+%` (or as in data) | `HealthRegen%` | `Health Regen` |
-| `BaseStaminaRegen_+%` | `StaminaRegen%` | `Stamina Regen` |
+| Stat key (example)                   | Current `display_name` (malformed) | Expected        |
+| ------------------------------------ | ---------------------------------- | --------------- |
+| `BaseHealthRegen_+%` (or as in data) | `HealthRegen%`                     | `Health Regen`  |
+| `BaseStaminaRegen_+%`                | `StaminaRegen%`                    | `Stamina Regen` |
 
 The `%` belongs on the **value** (handled by `formatEffectValue`), not in the stat label.
 
@@ -61,8 +61,8 @@ const featureNames: Record<string, string> =
   data.features != null && Object.keys(data.features).length > 0
     ? data.features
     : Object.fromEntries(
-        [...new Set(items.flatMap((item) => item.requirements?.features ?? []))].map((f) => [f, f]),
-      )
+        [...new Set(items.flatMap((item) => item.requirements?.features ?? []))].map((f) => [f, f])
+      );
 ```
 
 If `data.features` is null or empty, it falls back to the set of feature IDs from `item.requirements?.features` across all items and uses the raw ID as the display name (e.g. `"Styx"` instead of `"Styx Expansion"`). The DLC filter still works, but users see internal IDs.
@@ -71,10 +71,10 @@ If `data.features` is null or empty, it falls back to the set of feature IDs fro
 
 Ensure the top-level `features` object is always present and populated: every feature ID that appears on any item should be mapped to its public display name. Example:
 
-| ID | Display name |
-| --- | --- |
-| `Styx` | `Styx Expansion` |
-| `Homestead` | `Homestead` |
+| ID          | Display name     |
+| ----------- | ---------------- |
+| `Styx`      | `Styx Expansion` |
+| `Homestead` | `Homestead`      |
 
 New DLCs should be added to `features` when their items are added to the data.
 

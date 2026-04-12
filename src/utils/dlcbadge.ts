@@ -17,9 +17,9 @@ export const REQUIREMENT_PALETTE = [
   'text-pink-400',
   'text-teal-400',
   'text-indigo-400',
-] as const
+] as const;
 
-const DEFAULT_COLOUR = REQUIREMENT_PALETTE[0]
+const DEFAULT_COLOUR = REQUIREMENT_PALETTE[0];
 
 /**
  * Returns a map of id -> Tailwind colour class by iterating through the
@@ -28,19 +28,16 @@ const DEFAULT_COLOUR = REQUIREMENT_PALETTE[0]
  * so each gets a stable, distinct colour.
  */
 export function buildOrderedColorMap(orderedIds: string[]): Record<string, string> {
-  const map: Record<string, string> = {}
+  const map: Record<string, string> = {};
   for (let i = 0; i < orderedIds.length; i++) {
-    map[orderedIds[i]!] = REQUIREMENT_PALETTE[i % REQUIREMENT_PALETTE.length] ?? DEFAULT_COLOUR
+    map[orderedIds[i]!] = REQUIREMENT_PALETTE[i % REQUIREMENT_PALETTE.length] ?? DEFAULT_COLOUR;
   }
-  return map
+  return map;
 }
 
 /**
  * Returns the colour for an id from a pre-built map, or the default palette colour.
  */
-export function getRequirementColour(
-  id: string,
-  colorMap: Record<string, string>,
-): string {
-  return colorMap[id] ?? DEFAULT_COLOUR
+export function getRequirementColour(id: string, colorMap: Record<string, string>): string {
+  return colorMap[id] ?? DEFAULT_COLOUR;
 }

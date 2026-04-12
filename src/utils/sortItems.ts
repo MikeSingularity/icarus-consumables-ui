@@ -1,18 +1,18 @@
-import type { Item, StatMetadataEntry } from '@/types/consumables'
-import type { SortOption } from '@/types/ui'
-import { BASE_STAT_DISPLAY_ORDER, MODIFIER_SORT_CATEGORIES } from '@/constants/categories'
-import { formatBaseStatLabel } from '@/utils/formatters'
-import { getEffectiveTier } from '@/utils/requirements'
+import type { Item, StatMetadataEntry } from '@/types/consumables';
+import type { SortOption } from '@/types/ui';
+import { BASE_STAT_DISPLAY_ORDER, MODIFIER_SORT_CATEGORIES } from '@/constants/categories';
+import { formatBaseStatLabel } from '@/utils/formatters';
+import { getEffectiveTier } from '@/utils/requirements';
 
 /**
  * Sort key prefix for base_stat sorts (e.g. "base:BaseFoodRecovery_+").
  */
-const PREFIX_BASE = 'base:'
+const PREFIX_BASE = 'base:';
 
 /**
  * Sort key prefix for modifier category sorts (e.g. "modcat:Health").
  */
-const PREFIX_MODCAT = 'modcat:'
+const PREFIX_MODCAT = 'modcat:';
 
 /**
  * Builds the ordered list of sort options for the dropdown, derived from the loaded data.
@@ -23,14 +23,15 @@ const PREFIX_MODCAT = 'modcat:'
 export function buildSortOptions(
   items: Item[],
   statMetadata: Record<string, StatMetadataEntry>,
+  statCategories: Record<string, string>
 ): SortOption[] {
   const presentBaseStats = BASE_STAT_DISPLAY_ORDER.filter((k) =>
-    items.some((item) => Object.prototype.hasOwnProperty.call(item.base_stats, k)),
-  )
+    items.some((item) => Object.prototype.hasOwnProperty.call(item.base_stats, k))
+  );
 
-  const presentModCats = MODIFIER_SORT_CATEGORIES.filter((cat) =>
-    items.some((item) => (item.modifier_stats[cat] ?? 0) > 0),
-  )
+  const presentModCats = (MODIFIER_SORT_CATEGORIES as readonly string[]).filter((cat) =>
+    items.some((item) => (item.modifier_stats[cat] ?? 0) > 0)
+  );
 
   return [
     { key: 'tier', label: 'Tier' },
@@ -39,8 +40,11 @@ export function buildSortOptions(
       key: `${PREFIX_BASE}${k}`,
       label: formatBaseStatLabel(statMetadata[k]?.display_name ?? k),
     })),
-    ...presentModCats.map((cat) => ({ key: `${PREFIX_MODCAT}${cat}`, label: `${cat} Buffs` })),
-  ]
+    ...presentModCats.map((cat) => {
+      const label = statCategories[cat] ?? cat.replace(/_/g, ' ');
+      return { key: `${PREFIX_MODCAT}${cat}`, label: `${label} Buffs` };
+    }),
+  ];
 }
 
 /**
@@ -57,33 +61,33 @@ export function buildSortOptions(
  */
 export function sortItems(items: Item[], sortKey: string): Item[] {
   return [...items].sort((a, b) => {
-    const tierCmp = (): number => getEffectiveTier(b) - getEffectiveTier(a)
+    const tierCmp = (): number => getEffectiveTier(b) - getEffectiveTier(a);
 
     if (sortKey === 'tier') {
-      return tierCmp()
+      return tierCmp();
     }
 
     if (sortKey === 'name') {
-      const cmp = a.display_name.localeCompare(b.display_name)
-      return cmp !== 0 ? cmp : tierCmp()
+      const cmp = a.display_name.localeCompare(b.display_name);
+      return cmp !== 0 ? cmp : tierCmp();
     }
 
     if (sortKey.startsWith(PREFIX_BASE)) {
-      const statKey = sortKey.slice(PREFIX_BASE.length)
-      const aVal = a.base_stats[statKey] ?? -1
-      const bVal = b.base_stats[statKey] ?? -1
-      if (bVal !== aVal) return bVal - aVal
-      return tierCmp()
+      const statKey = sortKey.slice(PREFIX_BASE.length);
+      const aVal = a.base_stats[statKey] ?? -1;
+      const bVal = b.base_stats[statKey] ?? -1;
+      if (bVal !== aVal) return bVal - aVal;
+      return tierCmp();
     }
 
     if (sortKey.startsWith(PREFIX_MODCAT)) {
-      const category = sortKey.slice(PREFIX_MODCAT.length)
-      const aVal = a.modifier_stats[category] ?? -1
-      const bVal = b.modifier_stats[category] ?? -1
-      if (bVal !== aVal) return bVal - aVal
-      return tierCmp()
+      const category = sortKey.slice(PREFIX_MODCAT.length);
+      const aVal = a.modifier_stats[category] ?? -1;
+      const bVal = b.modifier_stats[category] ?? -1;
+      if (bVal !== aVal) return bVal - aVal;
+      return tierCmp();
     }
 
-    return 0
-  })
+    return 0;
+  });
 }
